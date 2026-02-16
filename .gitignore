@@ -38,3 +38,8 @@ next-env.d.ts
 # sentry
 .sentryclirc
 .env.sentry-build-plugin
+
+# playwright
+playwright-report/
+test-results/
+e2e/.auth/

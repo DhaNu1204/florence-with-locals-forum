@@ -266,7 +266,7 @@ export default async function ThreadPage({ params }: PageProps) {
         </nav>
 
         {/* Original post */}
-        <article className="rounded-lg border border-light-stone bg-white p-5 sm:p-7">
+        <article data-testid="thread-content" className="rounded-lg border border-light-stone bg-white p-5 sm:p-7">
           <div className="flex gap-5">
             {/* Author sidebar (desktop) */}
             {author && (

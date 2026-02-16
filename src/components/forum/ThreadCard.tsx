@@ -46,6 +46,7 @@ export function ThreadCard({
 }: ThreadCardProps) {
   return (
     <div
+      data-testid="thread-card"
       className={`rounded-lg border bg-white p-4 sm:p-5 transition-colors ${
         isPinned
           ? "border-terracotta/30 bg-terracotta/[0.02]"

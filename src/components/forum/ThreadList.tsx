@@ -35,7 +35,7 @@ export function ThreadList({
 
   return (
     <>
-      <div className="space-y-4">
+      <div data-testid="thread-list" className="space-y-4">
         {threads.map((t) => (
           <ThreadCard
             key={t.id}
@@ -61,6 +61,7 @@ export function ThreadList({
       {hasMore && (
         <div className="mt-6 flex justify-center">
           <button
+            data-testid="load-more-threads"
             onClick={loadMore}
             disabled={isPending}
             className="rounded-lg border border-light-stone bg-white px-6 py-2.5 text-base font-medium text-tuscan-brown transition-colors hover:border-terracotta/30 hover:bg-light-stone disabled:opacity-50"

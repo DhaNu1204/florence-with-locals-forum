@@ -114,6 +114,7 @@ export function PostItem({
 
   return (
     <div
+      data-testid="post-item"
       className={cn(
         "rounded-lg border p-4 sm:p-5",
         isSolution

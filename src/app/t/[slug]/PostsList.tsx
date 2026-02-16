@@ -93,6 +93,7 @@ export function PostsList({
           {hasMore && (
             <div className="mt-6 flex justify-center">
               <button
+                data-testid="load-more-replies"
                 onClick={loadMore}
                 disabled={isPending}
                 className="rounded-lg border border-light-stone bg-white px-6 py-2.5 text-base font-medium text-tuscan-brown transition-colors hover:border-terracotta/30 hover:bg-light-stone disabled:opacity-50"
