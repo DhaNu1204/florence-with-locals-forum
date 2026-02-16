@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { Photo, PhotoWithUploader, UserRole } from "@/types";
 import { extractSupabaseImages } from "@/lib/utils/extractImages";
@@ -188,6 +189,10 @@ export async function uploadPhotos(formData: FormData): Promise<UploadResult> {
   }
 
   if (uploadedPhotos.length === 0) {
+    Sentry.captureMessage("Photo upload failed: no photos succeeded", {
+      level: "warning",
+      tags: { action: "uploadPhotos" },
+    });
     return { error: "Failed to upload any photos." };
   }
 
@@ -290,7 +295,10 @@ export async function deletePhoto(
     .delete()
     .eq("id", photoId);
 
-  if (deleteError) return { error: "Failed to delete photo." };
+  if (deleteError) {
+    Sentry.captureException(deleteError, { tags: { action: "deletePhoto" } });
+    return { error: "Failed to delete photo." };
+  }
   return {};
 }
 
@@ -324,7 +332,10 @@ export async function getGalleryPhotos(
 
   const { data, error } = await query;
 
-  if (error) return { error: "Failed to load photos." };
+  if (error) {
+    Sentry.captureException(error, { tags: { action: "getGalleryPhotos" } });
+    return { error: "Failed to load photos." };
+  }
 
   const photos = (data || []) as unknown as PhotoWithUploader[];
 

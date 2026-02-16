@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { extractMentions } from "@/lib/utils/mentions";
 import { NotificationWithActor, ReferenceType } from "@/types";
@@ -35,7 +36,10 @@ export async function getNotifications(page = 1): Promise<NotificationsResult> {
     .order("created_at", { ascending: false })
     .range(from, to);
 
-  if (error) return { error: "Failed to load notifications." };
+  if (error) {
+    Sentry.captureException(error, { tags: { action: "getNotifications" } });
+    return { error: "Failed to load notifications." };
+  }
 
   const notifications = (data || []) as unknown as NotificationWithActor[];
 
@@ -78,7 +82,10 @@ export async function markAsRead(
     .eq("id", notificationId)
     .eq("user_id", user.id);
 
-  if (error) return { error: "Failed to mark notification as read." };
+  if (error) {
+    Sentry.captureException(error, { tags: { action: "markAsRead" } });
+    return { error: "Failed to mark notification as read." };
+  }
   return {};
 }
 
@@ -96,7 +103,10 @@ export async function markAllAsRead(): Promise<{ error?: string }> {
     .eq("user_id", user.id)
     .eq("is_read", false);
 
-  if (error) return { error: "Failed to mark all as read." };
+  if (error) {
+    Sentry.captureException(error, { tags: { action: "markAllAsRead" } });
+    return { error: "Failed to mark all as read." };
+  }
   return {};
 }
 

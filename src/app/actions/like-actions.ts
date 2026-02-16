@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 
 interface LikeResult {
@@ -43,7 +44,10 @@ export async function toggleLike(
       .delete()
       .eq("id", existingLike.id);
 
-    if (deleteError) return { error: "Failed to remove like." };
+    if (deleteError) {
+      Sentry.captureException(deleteError, { tags: { action: "toggleLike" } });
+      return { error: "Failed to remove like." };
+    }
 
     // Remove reputation from content author
     const authorId = await getContentAuthorId(supabase, targetType, targetId);
@@ -71,6 +75,7 @@ export async function toggleLike(
     if (insertError.message.includes("like_target_check")) {
       return { error: "Invalid like target." };
     }
+    Sentry.captureException(insertError, { tags: { action: "toggleLike" } });
     return { error: "Failed to like. You may have already liked this." };
   }
 

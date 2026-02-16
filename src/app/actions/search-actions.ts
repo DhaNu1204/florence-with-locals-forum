@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { SearchResult } from "@/types";
 import { searchSchema, validate } from "@/lib/validations";
@@ -19,7 +20,10 @@ export async function searchForum(query: string): Promise<SearchResults> {
     search_query: query.trim(),
   });
 
-  if (error) return { error: "Search failed. Please try again." };
+  if (error) {
+    Sentry.captureException(error, { tags: { action: "searchForum" } });
+    return { error: "Search failed. Please try again." };
+  }
 
   return { results: (data as SearchResult[]) || [] };
 }

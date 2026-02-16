@@ -1,3 +1,5 @@
+import { withSentryConfig } from "@sentry/nextjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Image optimization
@@ -71,4 +73,24 @@ const nextConfig = {
   poweredByHeader: false,
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Upload source maps to Sentry for readable stack traces
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Suppress source map warnings during build
+  silent: !process.env.CI,
+
+  // Route browser Sentry requests through Next.js server
+  // This prevents ad blockers from blocking error reports
+  tunnelRoute: "/monitoring",
+
+  // Automatically tree-shake Sentry logger in production
+  disableLogger: true,
+
+  // Hide source maps from users but upload to Sentry
+  hideSourceMaps: true,
+
+  // Widen the scope of the SDK to capture more errors
+  widenClientFileUpload: true,
+});

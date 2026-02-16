@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { ReportStatus } from "@/types";
 import { reportContentSchema, validate } from "@/lib/validations";
@@ -229,7 +230,10 @@ export async function updateReportStatus(
     .update(updateData)
     .eq("id", reportId);
 
-  if (updateError) return { error: "Failed to update report." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "updateReportStatus" } });
+    return { error: "Failed to update report." };
+  }
   return { success: true };
 }
 
@@ -244,7 +248,10 @@ export async function banUser(userId: string, reason: string): Promise<ActionRes
     .update({ is_banned: true, ban_reason: reason })
     .eq("id", userId);
 
-  if (updateError) return { error: "Failed to ban user." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "banUser" } });
+    return { error: "Failed to ban user." };
+  }
   return { success: true };
 }
 
@@ -257,7 +264,10 @@ export async function unbanUser(userId: string): Promise<ActionResult> {
     .update({ is_banned: false, ban_reason: null })
     .eq("id", userId);
 
-  if (updateError) return { error: "Failed to unban user." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "unbanUser" } });
+    return { error: "Failed to unban user." };
+  }
   return { success: true };
 }
 
@@ -276,7 +286,10 @@ export async function changeUserRole(
     .update({ role })
     .eq("id", userId);
 
-  if (updateError) return { error: "Failed to change role." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "changeUserRole" } });
+    return { error: "Failed to change role." };
+  }
   return { success: true };
 }
 
@@ -293,7 +306,10 @@ export async function deleteContent(
     .update({ is_deleted: true })
     .eq("id", contentId);
 
-  if (updateError) return { error: `Failed to delete ${contentType}.` };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "deleteContent" } });
+    return { error: `Failed to delete ${contentType}.` };
+  }
   return { success: true };
 }
 
@@ -320,7 +336,10 @@ export async function createCategory(data: {
     display_order: data.display_order ?? 0,
   });
 
-  if (insertError) return { error: "Failed to create category." };
+  if (insertError) {
+    Sentry.captureException(insertError, { tags: { action: "createCategory" } });
+    return { error: "Failed to create category." };
+  }
   return { success: true };
 }
 
@@ -344,7 +363,10 @@ export async function updateCategory(
     .update(data)
     .eq("id", categoryId);
 
-  if (updateError) return { error: "Failed to update category." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "updateCategory" } });
+    return { error: "Failed to update category." };
+  }
   return { success: true };
 }
 
@@ -381,7 +403,10 @@ export async function toggleCategoryActive(categoryId: number): Promise<ActionRe
     .update({ is_active: !cat.is_active })
     .eq("id", categoryId);
 
-  if (updateError) return { error: "Failed to toggle category." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "toggleCategoryActive" } });
+    return { error: "Failed to toggle category." };
+  }
   return { success: true };
 }
 
@@ -420,6 +445,9 @@ export async function reportContent(
     reason: reason.trim(),
   });
 
-  if (insertError) return { error: "Failed to submit report." };
+  if (insertError) {
+    Sentry.captureException(insertError, { tags: { action: "reportContent" } });
+    return { error: "Failed to submit report." };
+  }
   return { success: true };
 }

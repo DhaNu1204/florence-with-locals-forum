@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { slugifyWithSuffix } from "@/lib/utils/slugify";
 import { sanitizeHtml } from "@/lib/utils/sanitizeHtml";
@@ -77,7 +78,10 @@ export async function createThread(
     .select("id, slug")
     .single();
 
-  if (insertError) return { error: "Failed to create thread. Please try again." };
+  if (insertError) {
+    Sentry.captureException(insertError, { tags: { action: "createThread" } });
+    return { error: "Failed to create thread. Please try again." };
+  }
 
   // Link photos to thread
   if (photoIds.length > 0) {
@@ -137,7 +141,10 @@ export async function deleteThread(threadId: string): Promise<ActionResult> {
     .update({ is_deleted: true })
     .eq("id", threadId);
 
-  if (updateError) return { error: "Failed to delete thread." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "deleteThread" } });
+    return { error: "Failed to delete thread." };
+  }
   return {};
 }
 
@@ -187,7 +194,10 @@ export async function updateThread(
     .update({ title: trimmedTitle, content: sanitizedContent })
     .eq("id", threadId);
 
-  if (updateError) return { error: "Failed to update thread." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "updateThread" } });
+    return { error: "Failed to update thread." };
+  }
 
   // Track any new inline images added during edit
   await trackContentImages(sanitizedContent, user.id, { threadId });

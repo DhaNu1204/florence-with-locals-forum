@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeHtml } from "@/lib/utils/sanitizeHtml";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/utils/rateLimit";
@@ -72,7 +73,10 @@ export async function createPost(
     .select("id")
     .single();
 
-  if (insertError) return { error: "Failed to create reply. Please try again." };
+  if (insertError) {
+    Sentry.captureException(insertError, { tags: { action: "createPost" } });
+    return { error: "Failed to create reply. Please try again." };
+  }
 
   // Award reputation
   await supabase.rpc("update_reputation", {
@@ -139,7 +143,10 @@ export async function deletePost(postId: string): Promise<ActionResult> {
     .update({ is_deleted: true })
     .eq("id", postId);
 
-  if (updateError) return { error: "Failed to delete post." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "deletePost" } });
+    return { error: "Failed to delete post." };
+  }
   return {};
 }
 
@@ -183,7 +190,10 @@ export async function updatePost(
     .update({ content: sanitizedContent })
     .eq("id", postId);
 
-  if (updateError) return { error: "Failed to update post." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "updatePost" } });
+    return { error: "Failed to update post." };
+  }
 
   // Track any new inline images added during edit
   const { data: postData } = await supabase

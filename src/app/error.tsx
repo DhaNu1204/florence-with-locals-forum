@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
+import * as Sentry from "@sentry/nextjs";
 import { Button } from "@/components/ui/Button";
 
 interface ErrorProps {
@@ -8,7 +10,10 @@ interface ErrorProps {
   reset: () => void;
 }
 
-export default function ErrorPage({ reset }: ErrorProps) {
+export default function ErrorPage({ error, reset }: ErrorProps) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 text-center">
       <p className="text-5xl">&#x26A0;&#xFE0F;</p>

@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sanitizeHtml } from "@/lib/utils/sanitizeHtml";
@@ -60,6 +61,7 @@ export async function ensureProfile(): Promise<{ profile: Profile | null; error?
     .single();
 
   if (error) {
+    Sentry.captureException(error, { tags: { action: "ensureProfile" } });
     console.error("ensureProfile: Failed to create profile:", error.message);
     return { profile: null, error: error.message };
   }
@@ -127,7 +129,10 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
     })
     .eq("id", user.id);
 
-  if (updateError) return { error: "Failed to update profile." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "updateProfile" } });
+    return { error: "Failed to update profile." };
+  }
   return { success: true };
 }
 
@@ -157,7 +162,10 @@ export async function uploadAvatar(formData: FormData): Promise<ActionResult & {
     .from("avatars")
     .upload(path, file, { upsert: true });
 
-  if (uploadError) return { error: "Failed to upload avatar." };
+  if (uploadError) {
+    Sentry.captureException(uploadError, { tags: { action: "uploadAvatar" } });
+    return { error: "Failed to upload avatar." };
+  }
 
   const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
 
@@ -168,7 +176,10 @@ export async function uploadAvatar(formData: FormData): Promise<ActionResult & {
     .update({ avatar_url: avatarUrl })
     .eq("id", user.id);
 
-  if (updateError) return { error: "Failed to update profile avatar." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "uploadAvatar" } });
+    return { error: "Failed to update profile avatar." };
+  }
   return { success: true, avatarUrl };
 }
 
@@ -199,7 +210,10 @@ export async function changePassword(
     password: newPassword,
   });
 
-  if (updateError) return { error: "Failed to update password." };
+  if (updateError) {
+    Sentry.captureException(updateError, { tags: { action: "changePassword" } });
+    return { error: "Failed to update password." };
+  }
   return { success: true };
 }
 
