@@ -3,14 +3,26 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { PhotoUploader } from "@/components/ui/PhotoUploader";
 import { createThread } from "@/app/actions/thread-actions";
 import { uploadPhotos, getUserPhotoQuota } from "@/app/actions/photo-actions";
 import { useAuth } from "@/lib/supabase/auth-context";
 import type { CompressedImage } from "@/lib/utils/imageCompression";
+
+const RichTextEditor = dynamic(
+  () => import("@/components/editor/RichTextEditor").then((mod) => mod.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-lg border border-light-stone p-4 min-h-[200px] flex items-center justify-center">
+        <p className="text-dark-text/40 text-sm">Loading editor...</p>
+      </div>
+    ),
+  }
+);
 
 export default function NewThreadPage() {
   const params = useParams<{ slug: string }>();

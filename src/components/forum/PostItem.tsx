@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -9,8 +10,19 @@ import { Modal } from "@/components/ui/Modal";
 import { formatRelativeTime } from "@/lib/utils/formatDate";
 import { toggleLike } from "@/app/actions/like-actions";
 import { deletePost, updatePost } from "@/app/actions/post-actions";
-import { RichTextEditor } from "@/components/editor/RichTextEditor";
 import { cn } from "@/lib/utils/cn";
+
+const RichTextEditor = dynamic(
+  () => import("@/components/editor/RichTextEditor").then((mod) => mod.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-lg border border-light-stone p-4 min-h-[120px] flex items-center justify-center">
+        <p className="text-dark-text/40 text-sm">Loading editor...</p>
+      </div>
+    ),
+  }
+);
 
 interface PostItemProps {
   id: string;

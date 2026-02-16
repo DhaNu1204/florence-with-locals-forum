@@ -2,9 +2,21 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { PostItem } from "@/components/forum/PostItem";
-import { ReplyForm } from "@/components/forum/ReplyForm";
 import { getThreadReplies, type ReplyListItem } from "@/app/actions/post-actions";
+
+const ReplyForm = dynamic(
+  () => import("@/components/forum/ReplyForm").then((mod) => mod.ReplyForm),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-lg border border-light-stone p-6 mt-6">
+        <p className="text-dark-text/50 text-sm">Loading editor...</p>
+      </div>
+    ),
+  }
+);
 
 interface PostsListProps {
   threadId: string;
