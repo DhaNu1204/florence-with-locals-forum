@@ -26,11 +26,11 @@
     "@tiptap/react": "^3.19.0",
     "@tiptap/starter-kit": "^3.19.0",
     "autoprefixer": "^10.4.24",
-    "isomorphic-dompurify": "^3.0.0-rc.2",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
     "resend": "^6.9.2",
+    "sanitize-html": "^2.17.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -39,6 +39,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/sanitize-html": "^2.16.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",
     "postcss": "^8.5.6",
