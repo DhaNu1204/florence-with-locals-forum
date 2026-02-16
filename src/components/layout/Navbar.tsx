@@ -66,13 +66,14 @@ export function Navbar({ categories }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b-2 border-terracotta/20 bg-white shadow-sm">
+    <header className="sticky top-0 z-40 w-full border-b-2 border-terracotta/20 bg-white shadow-sm overflow-x-hidden">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left: Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div>
-            <span className="font-heading text-2xl font-bold text-tuscan-brown">
-              Florence With Locals
+        <Link href="/" className="flex items-center gap-2 shrink-0 min-w-0">
+          <div className="min-w-0">
+            <span className="font-heading text-lg font-bold text-tuscan-brown sm:text-2xl">
+              <span className="hidden min-[400px]:inline">Florence With Locals</span>
+              <span className="min-[400px]:hidden">FWL Forum</span>
             </span>
             <span className="ml-2 hidden text-sm text-terracotta sm:inline">
               Community Forum
@@ -151,11 +152,12 @@ export function Navbar({ categories }: NavbarProps) {
           <SearchInput />
 
           <a
-            href="https://florencewithlocals.com"
+            href="https://www.florencewithlocals.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-1 text-sm text-dark-text/40 transition-colors hover:text-terracotta"
+            className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-olive-green px-5 py-2 text-sm font-bold text-white shadow-md transition-all duration-200 hover:bg-olive-green/90 hover:shadow-lg hover:scale-105 hover:animate-cta-glow"
           >
+            <CompassIcon className="h-4 w-4" />
             Book a Tour
           </a>
         </div>
@@ -249,7 +251,7 @@ export function Navbar({ categories }: NavbarProps) {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileOpen(true)}
-            className="rounded-lg p-2 text-dark-text/70 transition-colors hover:bg-light-stone lg:hidden"
+            className="flex items-center justify-center min-h-[44px] min-w-[44px] rounded-lg text-dark-text/70 transition-colors hover:bg-light-stone lg:hidden"
             aria-label="Open menu"
           >
             <HamburgerIcon className="h-6 w-6" />
@@ -277,7 +279,7 @@ export function Navbar({ categories }: NavbarProps) {
               </button>
             </div>
 
-            <div className="overflow-y-auto px-4 py-4">
+            <div className="overflow-y-auto px-4 py-4" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
               {/* Mobile auth header */}
               {isLoading || (user && !profile) ? (
                 <div className="mb-4 flex items-center gap-3 rounded-lg bg-light-stone p-4">
@@ -327,6 +329,17 @@ export function Navbar({ categories }: NavbarProps) {
                 </div>
               )}
 
+              {/* Book a Tour CTA - top of mobile menu */}
+              <a
+                href="https://www.florencewithlocals.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-4 flex items-center justify-center gap-2 rounded-full bg-olive-green px-5 py-3 text-base font-bold text-white shadow-md transition-all duration-200 active:scale-95"
+              >
+                <CompassIcon className="h-5 w-5" />
+                Book a Tour
+              </a>
+
               {/* Mobile nav links */}
               <MobileNavLink
                 href="/"
@@ -339,7 +352,7 @@ export function Navbar({ categories }: NavbarProps) {
               <div className="mb-2">
                 <button
                   onClick={() => setMobileCatOpen(!mobileCatOpen)}
-                  className="flex w-full items-center justify-between min-h-[44px] rounded-lg px-3 py-3 text-base font-semibold uppercase tracking-wider text-dark-text/60 transition-colors hover:bg-light-stone"
+                  className="flex w-full items-center justify-between min-h-[48px] rounded-lg px-3 py-3 text-base font-semibold uppercase tracking-wider text-dark-text/60 transition-colors hover:bg-light-stone"
                 >
                   <span>Categories</span>
                   <ChevronDownIcon
@@ -366,7 +379,7 @@ export function Navbar({ categories }: NavbarProps) {
               <div className="mb-2">
                 <button
                   onClick={() => setMobileExploreOpen(!mobileExploreOpen)}
-                  className="flex w-full items-center justify-between min-h-[44px] rounded-lg px-3 py-3 text-base font-semibold uppercase tracking-wider text-olive-green/70 transition-colors hover:bg-light-stone"
+                  className="flex w-full items-center justify-between min-h-[48px] rounded-lg px-3 py-3 text-base font-semibold uppercase tracking-wider text-olive-green/70 transition-colors hover:bg-light-stone"
                 >
                   <span>Explore</span>
                   <ChevronDownIcon
@@ -402,15 +415,6 @@ export function Navbar({ categories }: NavbarProps) {
                 Search
               </MobileNavLink>
 
-              <a
-                href="https://florencewithlocals.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block min-h-[44px] rounded-lg px-3 py-3 text-base text-dark-text/50 transition-colors hover:bg-light-stone"
-              >
-                Book a Tour &rarr;
-              </a>
-
               {/* Mobile user links */}
               {user && profile && (
                 <>
@@ -429,7 +433,7 @@ export function Navbar({ categories }: NavbarProps) {
                   </MobileNavLink>
                   <button
                     onClick={handleSignOut}
-                    className="w-full min-h-[44px] rounded-lg px-3 py-3 text-left text-base text-red-600 transition-colors hover:bg-red-50"
+                    className="w-full min-h-[48px] rounded-lg px-3 py-3 text-left text-base text-red-600 transition-colors hover:bg-red-50"
                   >
                     Sign Out
                   </button>
@@ -495,7 +499,7 @@ function MobileNavLink({
     <Link
       href={href}
       onClick={onClick}
-      className="block min-h-[44px] rounded-lg px-3 py-3 text-base font-medium text-dark-text/80 transition-colors hover:bg-light-stone"
+      className="flex items-center min-h-[48px] rounded-lg px-3 py-3 text-base font-medium text-dark-text/80 transition-colors hover:bg-light-stone"
     >
       {children}
     </Link>
@@ -524,6 +528,18 @@ function CloseIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
+
+function CompassIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+      <circle cx="12" cy="12" r="9.75" strokeLinecap="round" strokeLinejoin="round" />
+      <polygon fill="currentColor" stroke="none" points="12,3.5 13.5,10.5 12,12 10.5,10.5" opacity="0.9" />
+      <polygon fill="currentColor" stroke="none" points="12,20.5 10.5,13.5 12,12 13.5,13.5" opacity="0.4" />
+      <polygon fill="currentColor" stroke="none" points="3.5,12 10.5,10.5 12,12 10.5,13.5" opacity="0.4" />
+      <polygon fill="currentColor" stroke="none" points="20.5,12 13.5,13.5 12,12 13.5,10.5" opacity="0.9" />
     </svg>
   );
 }

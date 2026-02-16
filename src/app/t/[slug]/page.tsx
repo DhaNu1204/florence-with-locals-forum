@@ -235,25 +235,26 @@ export default async function ThreadPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
+      <div className="w-full overflow-hidden">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
-        <nav className="mb-4 text-sm text-dark-text/50">
-          <Link href="/" className="hover:text-terracotta transition-colors">
+        <nav className="mb-4 flex flex-wrap items-baseline gap-y-1 text-sm text-dark-text/50">
+          <Link href="/" className="shrink-0 hover:text-terracotta transition-colors">
             Home
           </Link>
-          <span className="mx-2">/</span>
+          <span className="mx-2 shrink-0">/</span>
           {category && (
             <>
               <Link
                 href={`/c/${category.slug}`}
-                className="hover:text-terracotta transition-colors"
+                className="shrink-0 hover:text-terracotta transition-colors"
               >
                 {category.name}
               </Link>
-              <span className="mx-2">/</span>
+              <span className="mx-2 shrink-0">/</span>
             </>
           )}
-          <span className="text-dark-text/70 line-clamp-1 inline">
+          <span className="text-dark-text/70 line-clamp-1 min-w-0">
             {typedThread.title}
           </span>
         </nav>
@@ -341,7 +342,7 @@ export default async function ThreadPage({ params }: PageProps) {
                 )}
               </div>
 
-              <h1 className="font-heading text-3xl font-bold text-tuscan-brown sm:text-4xl">
+              <h1 className="font-heading text-xl font-bold text-tuscan-brown sm:text-3xl">
                 {typedThread.title}
               </h1>
 
@@ -412,6 +413,7 @@ export default async function ThreadPage({ params }: PageProps) {
         <div className="mt-8">
           <SocialSidebar />
         </div>
+      </div>
       </div>
     </>
   );

@@ -23,7 +23,7 @@ export function SocialSidebar() {
   };
 
   return (
-    <div className="rounded-lg border border-light-stone bg-white">
+    <div className="w-full max-w-full overflow-hidden rounded-lg border border-light-stone bg-white">
       {/* Follow Us */}
       <div className="p-5">
         <h3 className="font-heading text-lg font-semibold text-tuscan-brown">

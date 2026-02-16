@@ -35,9 +35,9 @@ export function CookieConsent() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-light-stone bg-white p-4 shadow-lg sm:p-5">
-        <div className="mx-auto flex max-w-4xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-base text-dark-text/70">
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-light-stone bg-white p-4 shadow-lg sm:p-5 overflow-hidden">
+        <div className="mx-auto flex max-w-4xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <p className="text-sm text-dark-text/70 sm:text-base">
             We use essential cookies to keep you logged in. We use{" "}
             <a
               href="https://plausible.io"
@@ -60,11 +60,13 @@ export function CookieConsent() {
             <Button
               variant="ghost"
               size="sm"
+              fullWidth
+              className="sm:w-auto"
               onClick={() => setShowSettings(true)}
             >
               Cookie Settings
             </Button>
-            <Button size="sm" onClick={handleAccept}>
+            <Button size="sm" fullWidth className="sm:w-auto" onClick={handleAccept}>
               Accept
             </Button>
           </div>

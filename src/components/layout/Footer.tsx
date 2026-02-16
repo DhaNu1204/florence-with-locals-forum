@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export function Footer() {
   return (
-    <footer className="bg-tuscan-brown text-warm-cream">
+    <footer className="w-full bg-tuscan-brown text-warm-cream overflow-hidden">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* About */}
-          <div>
+          <div className="min-w-0">
             <h3 className="font-heading text-xl font-semibold">
               Florence With Locals
             </h3>
@@ -18,7 +18,7 @@ export function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
+          <div className="min-w-0">
             <h3 className="font-heading text-xl font-semibold">Quick Links</h3>
             <ul className="mt-2 space-y-2">
               <FooterLink href="/">Home</FooterLink>
@@ -30,7 +30,7 @@ export function Footer() {
           </div>
 
           {/* Connect */}
-          <div>
+          <div className="min-w-0">
             <h3 className="font-heading text-xl font-semibold">Connect</h3>
             <ul className="mt-2 space-y-2">
               <FooterLink

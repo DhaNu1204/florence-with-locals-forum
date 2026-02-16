@@ -77,7 +77,7 @@ export function ThreadCard({
                 )}
                 <Link
                   href={`/t/${slug}`}
-                  className="text-lg font-medium text-dark-text hover:text-terracotta transition-colors line-clamp-1"
+                  className="text-base font-medium text-dark-text hover:text-terracotta transition-colors line-clamp-2 sm:text-lg sm:line-clamp-1"
                 >
                   {title}
                 </Link>

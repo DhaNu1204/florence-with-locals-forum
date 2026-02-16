@@ -100,8 +100,8 @@ export function ReplyForm({
         minHeight="sm"
       />
 
-      <div className="mt-3 flex justify-end">
-        <Button isLoading={isSubmitting} onClick={handleSubmit}>
+      <div className="mt-3 flex sm:justify-end">
+        <Button fullWidth className="sm:w-auto" isLoading={isSubmitting} onClick={handleSubmit}>
           Post Reply
         </Button>
       </div>

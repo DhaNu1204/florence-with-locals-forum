@@ -116,12 +116,12 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="border-b border-light-stone bg-white">
+      <section className="w-full overflow-hidden border-b border-light-stone bg-white">
         <div className="mx-auto max-w-7xl px-4 py-12 text-center sm:px-6 sm:py-16 lg:px-8">
-          <h1 className="font-heading text-4xl font-bold text-tuscan-brown sm:text-5xl lg:text-6xl">
+          <h1 className="font-heading text-3xl font-bold text-tuscan-brown sm:text-5xl lg:text-6xl">
             Welcome to the Florence With Locals Community
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-dark-text/60 sm:text-xl">
+          <p className="mx-auto mt-4 max-w-2xl text-base text-dark-text/60 sm:text-xl">
             Share your Florence experiences, get travel tips from locals, and
             connect with fellow travelers.
           </p>
@@ -137,14 +137,15 @@ export default async function HomePage() {
       </section>
 
       {/* Main content */}
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="lg:flex lg:gap-8">
+      <div className="w-full overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col lg:flex-row lg:gap-8 w-full overflow-hidden">
           {/* Categories */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h2 className="mb-5 font-heading text-2xl font-bold text-tuscan-brown">
               Forum Categories
             </h2>
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 w-full sm:grid-cols-2 sm:gap-5">
               {categories.map((cat) => {
                 const latest = latestMap.get(cat.id);
                 return (
@@ -184,7 +185,7 @@ export default async function HomePage() {
           </div>
 
           {/* Sidebar */}
-          <aside className="mt-8 w-full shrink-0 lg:mt-0 lg:w-80">
+          <aside className="mt-8 w-full lg:w-80 lg:flex-shrink-0 min-w-0 lg:mt-0">
             {/* 1. Community Stats */}
             <div className="rounded-lg border border-light-stone bg-white p-5">
               <h3 className="font-heading text-xl font-semibold text-tuscan-brown">
@@ -309,6 +310,7 @@ export default async function HomePage() {
             </div>
           </aside>
         </div>
+        </div>
       </div>
     </>
   );
@@ -317,8 +319,8 @@ export default async function HomePage() {
 function StatBox({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <p className="text-2xl font-bold text-tuscan-brown">{value}</p>
-      <p className="text-sm text-dark-text/40">{label}</p>
+      <p className="text-xl font-bold text-tuscan-brown sm:text-2xl">{value}</p>
+      <p className="text-xs text-dark-text/40 sm:text-sm">{label}</p>
     </div>
   );
 }

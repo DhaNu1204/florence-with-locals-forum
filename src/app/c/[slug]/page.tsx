@@ -85,6 +85,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const totalPages = Math.ceil(category.thread_count / PAGE_SIZE);
 
   return (
+    <div className="w-full overflow-hidden">
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Breadcrumbs */}
       <nav className="mb-4 text-sm text-dark-text/50">
@@ -100,11 +101,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         <div className="flex items-start gap-3">
           <span className="text-3xl">{category.icon}</span>
           <div>
-            <h1 className="font-heading text-3xl font-bold text-tuscan-brown sm:text-4xl">
+            <h1 className="font-heading text-2xl font-bold text-tuscan-brown sm:text-4xl">
               {category.name}
             </h1>
             {category.description && (
-              <p className="mt-1 text-lg text-dark-text/60">
+              <p className="mt-1 text-base text-dark-text/60 sm:text-lg">
                 {category.description}
               </p>
             )}
@@ -118,7 +119,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         )}
       </div>
 
-      <div className="lg:flex lg:gap-8">
+      <div className="flex flex-col lg:flex-row lg:gap-8 w-full overflow-hidden">
         {/* Thread list */}
         <div className="flex-1 min-w-0">
           {threads.length > 0 ? (
@@ -185,10 +186,11 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
         </div>
 
         {/* Sidebar */}
-        <aside className="mt-8 w-full shrink-0 lg:mt-0 lg:w-80">
+        <aside className="mt-8 w-full lg:w-80 lg:flex-shrink-0 min-w-0 lg:mt-0">
           <SocialSidebar />
         </aside>
       </div>
+    </div>
     </div>
   );
 }

@@ -20,6 +20,15 @@ const config: Config = {
         heading: ['"Playfair Display"', "Georgia", "serif"],
         body: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
+      keyframes: {
+        "cta-glow": {
+          "0%, 100%": { boxShadow: "0 0 8px rgba(107, 142, 35, 0.3)" },
+          "50%": { boxShadow: "0 0 18px rgba(107, 142, 35, 0.5)" },
+        },
+      },
+      animation: {
+        "cta-glow": "cta-glow 2s ease-in-out infinite",
+      },
     },
   },
   plugins: [],
