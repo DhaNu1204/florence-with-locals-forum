@@ -98,20 +98,22 @@ export async function toggleLike(
       actor_id: user.id,
     });
 
-    // Email notification (fire-and-forget, wrapped so it never crashes the action)
+    // Email notification (fire-and-forget — must never block or crash the like action)
     try {
-      const threadInfo = await getThreadInfoForLike(supabase, targetType, targetId);
-      if (threadInfo) {
-        sendNotificationEmail({
-          recipientId: authorId,
-          actorId: user.id,
-          type: "like",
-          actorUsername: profile.username,
-          threadTitle: threadInfo.title,
-          threadSlug: threadInfo.slug,
-          contentType: targetType,
-        }).catch(() => {});
-      }
+      void (async () => {
+        const threadInfo = await getThreadInfoForLike(supabase, targetType, targetId);
+        if (threadInfo) {
+          sendNotificationEmail({
+            recipientId: authorId,
+            actorId: user.id,
+            type: "like",
+            actorUsername: profile.username,
+            threadTitle: threadInfo.title,
+            threadSlug: threadInfo.slug,
+            contentType: targetType,
+          }).catch(() => {});
+        }
+      })().catch(() => {});
     } catch {
       // Email notifications must never break the like action
     }

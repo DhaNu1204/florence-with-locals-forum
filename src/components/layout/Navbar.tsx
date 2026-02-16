@@ -67,9 +67,14 @@ export function Navbar({ categories }: NavbarProps) {
   }, [isLoading]);
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      await signOut();
+    } catch {
+      // Ensure we still navigate even if signOut partially fails
+    }
     setUserDropdownOpen(false);
     setMobileOpen(false);
+    router.refresh();
     router.push("/");
   };
 

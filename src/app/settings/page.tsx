@@ -196,7 +196,12 @@ export default function SettingsPage() {
       setDeleting(false);
       return;
     }
-    await signOut();
+    try {
+      await signOut();
+    } catch {
+      // Ensure we still navigate even if signOut partially fails
+    }
+    router.refresh();
     router.push("/");
   };
 

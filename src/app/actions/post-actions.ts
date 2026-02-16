@@ -102,7 +102,7 @@ export async function createPost(
   // Create mention notifications
   await createMentionNotifications(sanitizedContent, user.id, "post", post.id);
 
-  // Email notifications (fire-and-forget, wrapped so it never crashes the action)
+  // Email notifications (fire-and-forget — must never block or crash post creation)
   try {
     if (thread.author_id !== user.id) {
       sendNotificationEmail({
@@ -118,23 +118,26 @@ export async function createPost(
 
     const mentionedUsernames = extractMentions(sanitizedContent);
     if (mentionedUsernames.length > 0) {
-      const { data: mentionedUsers } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .in("username", mentionedUsernames);
+      // Fire-and-forget: async IIFE runs in background, never blocks the action
+      void (async () => {
+        const { data: mentionedUsers } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("username", mentionedUsernames);
 
-      for (const mentioned of mentionedUsers ?? []) {
-        sendNotificationEmail({
-          recipientId: mentioned.id,
-          actorId: user.id,
-          type: "mention",
-          actorUsername: profile.username,
-          threadTitle: thread.title,
-          threadSlug: thread.slug,
-          contentType: "post",
-          contentPreview: sanitizedContent,
-        }).catch(() => {});
-      }
+        for (const mentioned of mentionedUsers ?? []) {
+          sendNotificationEmail({
+            recipientId: mentioned.id,
+            actorId: user.id,
+            type: "mention",
+            actorUsername: profile.username,
+            threadTitle: thread.title,
+            threadSlug: thread.slug,
+            contentType: "post",
+            contentPreview: sanitizedContent,
+          }).catch(() => {});
+        }
+      })().catch(() => {});
     }
   } catch {
     // Email notifications must never break post creation

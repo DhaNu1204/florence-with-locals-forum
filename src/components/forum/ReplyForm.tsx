@@ -64,17 +64,21 @@ export function ReplyForm({
     }
 
     setIsSubmitting(true);
-    const result = await createPost(threadId, trimmed);
+    try {
+      const result = await createPost(threadId, trimmed);
 
-    if (result.error) {
-      setError(result.error);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      setContent("");
+      onReplyCreated?.();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    setContent("");
-    setIsSubmitting(false);
-    onReplyCreated?.();
   };
 
   return (

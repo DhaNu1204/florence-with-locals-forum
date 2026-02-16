@@ -1,6 +1,5 @@
 import { Resend } from "resend";
 import * as Sentry from "@sentry/nextjs";
-import { serverEnv } from "@/lib/env";
 
 const FROM_EMAIL = "Florence With Locals Forum <forum@florencewithlocals.com>";
 
@@ -9,11 +8,17 @@ let resendInstance: Resend | null = null;
 /**
  * Get a lazy-initialised Resend client.
  * Returns null when no API key is configured (safe for local dev).
+ *
+ * NOTE: reads process.env directly instead of importing serverEnv to avoid
+ * triggering eager requireEnv() checks for unrelated vars (e.g.
+ * SUPABASE_SERVICE_ROLE_KEY) which would crash the entire import chain
+ * if any required server env var is missing.
  */
 export function getResend(): Resend | null {
-  if (!serverEnv.RESEND_API_KEY) return null;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return null;
   if (!resendInstance) {
-    resendInstance = new Resend(serverEnv.RESEND_API_KEY);
+    resendInstance = new Resend(apiKey);
   }
   return resendInstance;
 }
