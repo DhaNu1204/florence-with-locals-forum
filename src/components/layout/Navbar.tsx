@@ -25,6 +25,7 @@ export function Navbar({ categories }: NavbarProps) {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mobileCatOpen, setMobileCatOpen] = useState(false);
   const [mobileExploreOpen, setMobileExploreOpen] = useState(false);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
   const catRef = useRef<HTMLDivElement>(null);
   const exploreRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
@@ -57,6 +58,13 @@ export function Navbar({ categories }: NavbarProps) {
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
+
+  // Loading timeout — show auth buttons after 2s if still loading
+  useEffect(() => {
+    if (!isLoading) return;
+    const timer = setTimeout(() => setLoadingTimedOut(true), 2000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -100,13 +108,13 @@ export function Navbar({ categories }: NavbarProps) {
               />
             </button>
             {catDropdownOpen && (
-              <div className="absolute left-0 top-full z-50 mt-1 w-72 rounded-lg border border-light-stone bg-white py-2 shadow-lg">
+              <div className="absolute left-0 top-full z-50 mt-1 min-w-[280px] w-auto rounded-lg border border-gray-100 bg-white py-2 shadow-lg">
                 {forumCategories.map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/c/${cat.slug}`}
                     onClick={() => setCatDropdownOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-base text-dark-text/80 transition-colors hover:bg-light-stone"
+                    className="flex items-center gap-3 px-4 py-3 text-base text-dark-text/80 whitespace-nowrap transition-colors hover:bg-warm-cream"
                   >
                     <span className="text-lg">{cat.icon}</span>
                     <span>{cat.name}</span>
@@ -131,13 +139,13 @@ export function Navbar({ categories }: NavbarProps) {
               />
             </button>
             {exploreDropdownOpen && (
-              <div className="absolute left-0 top-full z-50 mt-1 w-72 rounded-lg border border-light-stone bg-white py-2 shadow-lg">
+              <div className="absolute left-0 top-full z-50 mt-1 min-w-[250px] w-auto rounded-lg border border-gray-100 bg-white py-2 shadow-lg">
                 {exploreCategories.map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/c/${cat.slug}`}
                     onClick={() => setExploreDropdownOpen(false)}
-                    className="flex items-center gap-3 px-4 py-2.5 text-base text-dark-text/80 transition-colors hover:bg-olive-green/10 hover:text-olive-green"
+                    className="flex items-center gap-3 px-4 py-3 text-base text-dark-text/80 whitespace-nowrap transition-colors hover:bg-warm-cream"
                   >
                     <span className="text-lg">{cat.icon}</span>
                     <span>{cat.name}</span>
@@ -166,10 +174,9 @@ export function Navbar({ categories }: NavbarProps) {
         <div className="flex items-center gap-2">
           {/* Desktop auth */}
           <div className="hidden lg:flex lg:items-center lg:gap-2">
-            {isLoading ? (
+            {isLoading && !loadingTimedOut ? (
               <div className="flex items-center gap-2">
-                <div className="h-9 w-9 animate-pulse rounded-full bg-light-stone" />
-                <div className="h-4 w-4 animate-pulse rounded bg-light-stone" />
+                <div className="h-8 w-8 animate-pulse rounded-full bg-light-stone" />
               </div>
             ) : user && profile ? (
               <>
@@ -192,12 +199,12 @@ export function Navbar({ categories }: NavbarProps) {
                     />
                   </button>
                   {userDropdownOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-1 w-56 rounded-lg border border-light-stone bg-white py-2 shadow-lg">
+                    <div className="absolute right-0 top-full z-50 mt-1 min-w-[220px] w-auto rounded-lg border border-gray-100 bg-white py-2 shadow-lg">
                       <div className="border-b border-light-stone px-4 pb-2 mb-1">
-                        <p className="text-base font-medium text-dark-text">
+                        <p className="text-base font-medium text-dark-text whitespace-nowrap">
                           {profile.full_name || profile.username}
                         </p>
-                        <p className="text-sm text-dark-text/50">
+                        <p className="text-sm text-dark-text/50 whitespace-nowrap">
                           @{profile.username}
                         </p>
                       </div>
@@ -216,7 +223,7 @@ export function Navbar({ categories }: NavbarProps) {
                       <div className="my-1 border-t border-light-stone" />
                       <button
                         onClick={handleSignOut}
-                        className="w-full px-4 py-2.5 text-left text-base text-red-600 transition-colors hover:bg-red-50"
+                        className="w-full px-4 py-3 text-left text-base text-red-600 whitespace-nowrap transition-colors hover:bg-red-50"
                       >
                         Sign Out
                       </button>
@@ -226,8 +233,11 @@ export function Navbar({ categories }: NavbarProps) {
               </>
             ) : user && !profile ? (
               <div className="flex items-center gap-2">
-                <div className="h-9 w-9 animate-pulse rounded-full bg-light-stone" />
-                <div className="h-4 w-4 animate-pulse rounded bg-light-stone" />
+                <NotificationBell />
+                <Avatar
+                  name={user.email?.split("@")[0] || "U"}
+                  size="sm"
+                />
               </div>
             ) : (
               <>
@@ -281,12 +291,25 @@ export function Navbar({ categories }: NavbarProps) {
 
             <div className="overflow-y-auto px-4 py-4" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
               {/* Mobile auth header */}
-              {isLoading || (user && !profile) ? (
+              {isLoading && !loadingTimedOut ? (
                 <div className="mb-4 flex items-center gap-3 rounded-lg bg-light-stone p-4">
-                  <div className="h-12 w-12 animate-pulse rounded-full bg-dark-text/10" />
+                  <div className="h-10 w-10 animate-pulse rounded-full bg-dark-text/10" />
                   <div className="space-y-2">
                     <div className="h-4 w-24 animate-pulse rounded bg-dark-text/10" />
                     <div className="h-3 w-16 animate-pulse rounded bg-dark-text/10" />
+                  </div>
+                </div>
+              ) : user && !profile ? (
+                <div className="mb-4 flex items-center gap-3 rounded-lg bg-light-stone p-4">
+                  <Avatar
+                    name={user.email?.split("@")[0] || "U"}
+                    size="md"
+                  />
+                  <div>
+                    <p className="text-base font-medium text-dark-text">
+                      {user.email?.split("@")[0] || "User"}
+                    </p>
+                    <p className="text-sm text-dark-text/50">Loading profile...</p>
                   </div>
                 </div>
               ) : user && profile ? (
@@ -479,7 +502,7 @@ function DropdownLink({
     <Link
       href={href}
       onClick={onClick}
-      className="block px-4 py-2.5 text-base text-dark-text/80 transition-colors hover:bg-light-stone"
+      className="block px-4 py-3 text-base text-dark-text/80 whitespace-nowrap transition-colors hover:bg-warm-cream"
     >
       {children}
     </Link>

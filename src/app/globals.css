@@ -3,12 +3,6 @@
 @tailwind utilities;
 
 /* Prevent horizontal overflow globally */
-*,
-*::before,
-*::after {
-  max-width: 100vw;
-}
-
 html {
   overflow-x: hidden;
 }
@@ -19,15 +13,13 @@ body {
   max-width: 100%;
 }
 
-/* Every section should respect viewport */
+/* Content flow elements should respect viewport — but NOT generic divs,
+   because absolutely-positioned dropdowns inside small parents would get
+   constrained to the parent width by max-width: 100%. */
 main,
 section,
 article,
-aside,
-header,
-footer,
-nav,
-div {
+aside {
   max-width: 100%;
 }
 

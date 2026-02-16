@@ -74,6 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (currentSession?.user) {
           setSession(currentSession);
           setUser(currentSession.user);
+          // Mark loading done as soon as session is known — profile loads in background
+          setIsLoading(false);
           const p = await fetchProfile(currentSession.user.id);
           if (mounted) setProfile(p);
         }
