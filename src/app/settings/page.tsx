@@ -73,9 +73,19 @@ export default function SettingsPage() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     router.push("/auth/login?redirectTo=/settings");
     return null;
+  }
+
+  // User exists but profile is still loading or being auto-created
+  if (!profile) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
+        <p className="text-base text-dark-text/60">Setting up your profile...</p>
+      </div>
+    );
   }
 
   const handleProfileSubmit = async (e: React.FormEvent) => {

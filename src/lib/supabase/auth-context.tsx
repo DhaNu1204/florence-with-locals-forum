@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { ensureProfile } from "@/app/actions/profile-actions";
 import type { User, Session } from "@supabase/supabase-js";
 import type { Profile } from "@/types";
 
@@ -38,12 +39,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq("id", userId)
       .single();
 
-    if (error) {
-      console.error("AuthContext: profile fetch error:", error.message);
-      return null;
+    if (data) {
+      console.log("AuthContext: profile loaded:", data?.username);
+      return data as Profile;
     }
-    console.log("AuthContext: profile loaded:", data?.username);
-    return data as Profile;
+
+    // No profile found — auto-create via server action (bypasses RLS)
+    if (error) {
+      console.warn("AuthContext: no profile found for", userId, "— attempting auto-create");
+    }
+    const result = await ensureProfile();
+    if (result.profile) {
+      console.log("AuthContext: auto-created profile:", result.profile.username);
+      return result.profile;
+    }
+    console.error("AuthContext: failed to create profile:", result.error);
+    return null;
   }
 
   async function refreshProfile() {

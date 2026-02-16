@@ -1,11 +1,71 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sanitizeHtml } from "@/lib/utils/sanitizeHtml";
+import type { Profile } from "@/types";
 
 interface ActionResult {
   error?: string;
   success?: boolean;
+}
+
+/**
+ * Ensures a profile exists for the current user.
+ * If no profile row exists (e.g. OAuth user where trigger didn't fire),
+ * creates one using the service role client to bypass RLS.
+ */
+export async function ensureProfile(): Promise<{ profile: Profile | null; error?: string }> {
+  const supabase = createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { profile: null, error: "Not authenticated" };
+
+  // Try to fetch existing profile
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (existing) return { profile: existing as Profile };
+
+  // No profile exists — create one using admin client (bypasses RLS)
+  console.warn("ensureProfile: No profile found for", user.id, "— creating one");
+
+  const admin = createAdminClient();
+  const metadata = user.user_metadata || {};
+
+  // Generate username from email prefix (must match DB constraint: ^[a-z][a-z0-9-]*$)
+  let baseUsername = (user.email?.split("@")[0] || "user")
+    .replace(/[^a-z0-9]/gi, "")
+    .toLowerCase()
+    .replace(/^[^a-z]+/, "") // strip leading non-letters
+    .slice(0, 24) || "user";
+  if (!baseUsername || !/^[a-z]/.test(baseUsername)) baseUsername = "user";
+  const suffix = Math.random().toString(36).slice(2, 6);
+  const username = baseUsername + "-" + suffix;
+
+  const { data: newProfile, error } = await admin
+    .from("profiles")
+    .insert({
+      id: user.id,
+      username,
+      full_name: metadata.full_name || metadata.name || null,
+      avatar_url: metadata.avatar_url || metadata.picture || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("ensureProfile: Failed to create profile:", error.message);
+    return { profile: null, error: error.message };
+  }
+
+  console.log("ensureProfile: Created profile", newProfile?.username, "for", user.id);
+  return { profile: newProfile as Profile };
 }
 
 export async function updateProfile(formData: FormData): Promise<ActionResult> {
