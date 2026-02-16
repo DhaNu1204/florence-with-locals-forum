@@ -49,34 +49,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchingRef = useRef<string | null>(null);
 
   async function fetchProfile(userId: string) {
-    // Deduplicate: if we're already fetching for this user, skip
-    if (fetchingRef.current === userId) {
-      console.log("AuthContext: fetchProfile already in progress for", userId, "— skipping");
-      return null;
-    }
+    if (fetchingRef.current === userId) return null;
     fetchingRef.current = userId;
-
-    console.log("AuthContext: fetchProfile called for", userId);
-    console.log("AuthContext: Supabase URL =", process.env.NEXT_PUBLIC_SUPABASE_URL);
 
     try {
       // --- Fast path: browser-side query with timeout ---
       try {
-        // Test if the browser Supabase client works at all
-        console.log("AuthContext: testing Supabase connection with categories query...");
         const testResult = await withTimeout(
           Promise.resolve(supabase.from("categories").select("id").limit(1)),
           5000,
           "categories test query"
         );
-        console.log(
-          "AuthContext: test query result — data:", !!testResult.data,
-          "error:", testResult.error?.message || "none"
-        );
 
         if (testResult.data) {
-          // Client works — try the profile query
-          console.log("AuthContext: querying profiles table for id", userId);
           const profileResult = await withTimeout(
             Promise.resolve(
               supabase.from("profiles").select("*").eq("id", userId).single()
@@ -84,47 +69,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             5000,
             "profile query"
           );
-          console.log(
-            "AuthContext: profile query — data:", !!profileResult.data,
-            "error:", profileResult.error?.message || "none",
-            "status:", profileResult.status
-          );
 
           if (profileResult.data) {
-            console.log("AuthContext: profile loaded via browser client:", (profileResult.data as unknown as Profile).username);
             return profileResult.data as unknown as Profile;
           }
-
-          if (profileResult.error) {
-            console.error("AuthContext: profile query error:", profileResult.error.message, "code:", profileResult.error.code);
-          }
         }
-      } catch (err) {
-        console.warn("AuthContext: browser query failed/timed out:", (err as Error).message);
+      } catch {
+        // Browser query failed or timed out — fall through to server action
       }
 
       // --- Fallback: server action (uses admin client, bypasses browser client issues) ---
-      console.log("AuthContext: falling back to ensureProfile server action");
       try {
         const result = await withTimeout(
           ensureProfile(),
           10000,
           "ensureProfile server action"
         );
-        console.log(
-          "AuthContext: ensureProfile result — profile:", !!result.profile,
-          "error:", result.error || "none"
-        );
-        if (result.profile) {
-          console.log("AuthContext: profile loaded via server action:", result.profile.username);
-          return result.profile;
-        }
+        if (result.profile) return result.profile;
       } catch (err) {
-        console.error("AuthContext: ensureProfile failed/timed out:", (err as Error).message);
+        console.error("AuthContext: ensureProfile failed:", (err as Error).message);
       }
 
       // --- Last resort: retry server action once after a delay ---
-      console.warn("AuthContext: first ensureProfile attempt failed — retrying after 2s...");
       await new Promise((r) => setTimeout(r, 2000));
       try {
         const retryResult = await withTimeout(
@@ -132,16 +98,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           10000,
           "ensureProfile retry"
         );
-        if (retryResult.profile) {
-          console.log("AuthContext: profile loaded on retry:", retryResult.profile.username);
-          return retryResult.profile;
-        }
-        console.error("AuthContext: retry also failed:", retryResult.error || "no profile returned");
+        if (retryResult.profile) return retryResult.profile;
       } catch (err) {
-        console.error("AuthContext: retry ensureProfile failed/timed out:", (err as Error).message);
+        console.error("AuthContext: ensureProfile retry failed:", (err as Error).message);
       }
 
-      console.error("AuthContext: ALL attempts to load profile failed for", userId);
+      console.error("AuthContext: all attempts to load profile failed for", userId);
       return null;
     } finally {
       fetchingRef.current = null;
@@ -167,14 +129,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function init() {
       try {
-        console.log("AuthContext: init — getting session...");
         const {
           data: { session: currentSession },
         } = await supabase.auth.getSession();
 
         if (!mounted) return;
-
-        console.log("AuthContext: init — session:", !!currentSession, "user:", !!currentSession?.user);
 
         if (currentSession?.user) {
           setSession(currentSession);
@@ -195,8 +154,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
-      console.log("AuthContext: AUTH EVENT:", event);
-
       if (!mounted) return;
 
       if (event === "SIGNED_OUT") {
@@ -209,9 +166,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (newSession?.user) {
         setSession(newSession);
         setUser(newSession.user);
-
-        // Only fetch profile if we don't already have one for this user
-        // Also deduplicated via fetchingRef inside fetchProfile
         const p = await fetchProfile(newSession.user.id);
         if (mounted && p) setProfile(p);
       }

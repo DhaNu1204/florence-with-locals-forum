@@ -19,8 +19,6 @@ export default function SettingsPage() {
   const { user, profile, isLoading, refreshProfile, signOut } = useAuth();
   const router = useRouter();
 
-  console.log("Settings page render — isLoading:", isLoading, "user:", !!user, "profile:", !!profile, "username:", profile?.username);
-
   // Profile form state
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
@@ -110,7 +108,6 @@ export default function SettingsPage() {
     setProfileMessage(null);
 
     try {
-      console.log("Settings: saving profile...");
       const formData = new FormData();
       formData.set("username", username);
       formData.set("full_name", fullName);
@@ -119,15 +116,13 @@ export default function SettingsPage() {
       formData.set("website", website);
 
       const result = await updateProfile(formData);
-      console.log("Settings: updateProfile result:", result);
       if (result.error) {
         setProfileMessage({ type: "error", text: result.error });
       } else {
         setProfileMessage({ type: "success", text: "Profile updated successfully!" });
         await refreshProfile();
       }
-    } catch (err) {
-      console.error("Settings: handleProfileSubmit error:", err);
+    } catch {
       setProfileMessage({ type: "error", text: "Failed to save profile. Please try again." });
     }
     setProfileSaving(false);
