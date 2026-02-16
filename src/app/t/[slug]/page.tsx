@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -18,40 +19,50 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const supabase = createClient();
-  const { data: thread } = await supabase
-    .from("threads")
-    .select("title, content, category_id, author_id")
-    .eq("slug", params.slug)
-    .eq("is_deleted", false)
-    .single();
+  try {
+    console.log("Thread metadata: generating for slug:", params.slug);
+    const supabase = createClient();
+    const { data: thread, error: threadError } = await supabase
+      .from("threads")
+      .select("title, content, category_id, author_id")
+      .eq("slug", params.slug)
+      .eq("is_deleted", false)
+      .single();
 
-  if (!thread) return { title: "Thread Not Found" };
+    if (threadError) console.error("Thread metadata: fetch error:", threadError.message, threadError.code);
+    if (!thread) return { title: "Thread Not Found" };
 
-  const description = truncate(thread.content, 160);
+    const description = truncate(thread.content, 160);
 
-  // Fetch category name and author username for OG image
-  const [catRes, authorRes] = await Promise.all([
-    supabase.from("categories").select("name").eq("id", thread.category_id).single(),
-    supabase.from("profiles").select("username").eq("id", thread.author_id).single(),
-  ]);
+    // Fetch category name and author username for OG image
+    const [catRes, authorRes] = await Promise.all([
+      supabase.from("categories").select("name").eq("id", thread.category_id).single(),
+      supabase.from("profiles").select("username").eq("id", thread.author_id).single(),
+    ]);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://forum.florencewithlocals.com";
-  const ogParams = new URLSearchParams({
-    title: thread.title,
-    ...(catRes.data?.name && { category: catRes.data.name }),
-    ...(authorRes.data?.username && { author: authorRes.data.username }),
-  });
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://forum.florencewithlocals.com";
+    const ogParams = new URLSearchParams({
+      title: thread.title,
+      ...(catRes.data?.name && { category: catRes.data.name }),
+      ...(authorRes.data?.username && { author: authorRes.data.username }),
+    });
 
-  return {
-    title: thread.title,
-    description,
-    openGraph: {
+    return {
       title: thread.title,
       description,
-      images: [`${siteUrl}/api/og?${ogParams.toString()}`],
-    },
-  };
+      openGraph: {
+        title: thread.title,
+        description,
+        images: [`${siteUrl}/api/og?${ogParams.toString()}`],
+      },
+    };
+  } catch (error) {
+    console.error("Thread metadata CRASH:", error);
+    Sentry.captureException(error, {
+      tags: { page: "thread-metadata", slug: params.slug },
+    });
+    return { title: "Thread" };
+  }
 }
 
 interface ThreadData {
@@ -103,22 +114,28 @@ interface PostRow {
 }
 
 export default async function ThreadPage({ params }: PageProps) {
+  try {
+  console.log("Thread page: starting render for slug:", params.slug);
   const supabase = createClient();
 
-  const { data: thread } = await supabase
+  console.log("Thread page: fetching thread...");
+  const { data: thread, error: threadError } = await supabase
     .from("threads")
     .select("id, title, slug, content, is_pinned, is_locked, view_count, reply_count, like_count, created_at, updated_at, category_id, author_id")
     .eq("slug", params.slug)
     .eq("is_deleted", false)
     .single();
 
+  if (threadError) console.error("Thread page: thread fetch error:", threadError.message, threadError.code);
   if (!thread) notFound();
 
   const typedThread = thread as unknown as ThreadData;
+  console.log("Thread page: thread loaded:", typedThread.id, typedThread.title);
 
   const REPLY_PAGE_SIZE = 20;
 
   // Parallel fetches — replies are now paginated (first page + 1 to detect hasMore)
+  console.log("Thread page: fetching category, author, posts, user, photos...");
   const [categoryRes, authorRes, postsRes, userRes, photosRes] = await Promise.all([
     supabase
       .from("categories")
@@ -148,6 +165,11 @@ export default async function ThreadPage({ params }: PageProps) {
       .order("created_at", { ascending: true }),
   ]);
 
+  if (categoryRes.error) console.error("Thread page: category error:", categoryRes.error.message);
+  if (authorRes.error) console.error("Thread page: author error:", authorRes.error.message);
+  if (postsRes.error) console.error("Thread page: posts error:", postsRes.error.message);
+  if (photosRes.error) console.error("Thread page: photos error:", photosRes.error.message);
+
   const category = categoryRes.data as unknown as CategoryData | null;
   const author = authorRes.data as unknown as AuthorProfile | null;
   const allPostsRaw = (postsRes.data as unknown as PostRow[]) ?? [];
@@ -155,6 +177,7 @@ export default async function ThreadPage({ params }: PageProps) {
   const posts = repliesHasMore ? allPostsRaw.slice(0, REPLY_PAGE_SIZE) : allPostsRaw;
   const currentUser = userRes.data.user;
   const threadPhotos = (photosRes.data || []) as unknown as PhotoWithUploader[];
+  console.log("Thread page: parallel fetches done — category:", !!category, "author:", !!author, "posts:", posts.length, "user:", !!currentUser, "photos:", threadPhotos.length);
 
   // Get current user's profile and likes
   let currentProfile: { id: string; role: string; username: string; avatar_url: string | null } | null = null;
@@ -162,6 +185,7 @@ export default async function ThreadPage({ params }: PageProps) {
   const userLikedPostIds: Set<string> = new Set();
 
   if (currentUser) {
+    console.log("Thread page: fetching current user profile and likes...");
     const [profileRes, threadLikeRes, postLikesRes] = await Promise.all([
       supabase
         .from("profiles")
@@ -184,11 +208,13 @@ export default async function ThreadPage({ params }: PageProps) {
         ),
     ]);
 
+    if (profileRes.error) console.error("Thread page: current user profile error:", profileRes.error.message);
     currentProfile = profileRes.data as unknown as { id: string; role: string; username: string; avatar_url: string | null } | null;
     userLikedThread = !!threadLikeRes.data;
     for (const like of postLikesRes.data ?? []) {
       if (like.post_id) userLikedPostIds.add(like.post_id);
     }
+    console.log("Thread page: user data loaded — profile:", !!currentProfile, "likedThread:", userLikedThread);
   }
 
   // Increment view count (fire-and-forget)
@@ -425,4 +451,12 @@ export default async function ThreadPage({ params }: PageProps) {
       </div>
     </>
   );
+
+  } catch (error) {
+    console.error("Thread page CRASH:", error);
+    Sentry.captureException(error, {
+      tags: { page: "thread-detail", slug: params.slug },
+    });
+    throw error;
+  }
 }
