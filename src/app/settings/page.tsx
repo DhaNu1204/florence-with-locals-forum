@@ -219,8 +219,7 @@ export default function SettingsPage() {
     } catch {
       // Ensure we still navigate even if signOut partially fails
     }
-    router.refresh();
-    router.push("/");
+    window.location.href = "/";
   };
 
   return (

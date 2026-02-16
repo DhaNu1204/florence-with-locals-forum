@@ -32,41 +32,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   async function fetchProfile(userId: string, retries = 2) {
-    console.log("AuthContext: fetching profile for", userId);
+    console.log("AuthContext: fetchProfile called for", userId);
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       // On retry, wait a moment for the DB trigger / cookies to settle
       if (attempt > 0) {
-        console.log("AuthContext: retry", attempt, "for", userId);
-        await new Promise((r) => setTimeout(r, 1000));
+        console.log("AuthContext: fetchProfile retry", attempt, "of", retries, "for", userId);
+        await new Promise((r) => setTimeout(r, 1500));
       }
 
-      const { data } = await supabase
+      console.log("AuthContext: querying profiles table for id", userId, "(attempt", attempt, ")");
+      const { data, error, status } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
+      console.log("AuthContext: query result — data:", !!data, "error:", error?.message || "none", "status:", status);
+
       if (data) {
-        console.log("AuthContext: profile loaded:", data?.username);
+        console.log("AuthContext: profile loaded:", (data as Profile).username);
         return data as Profile;
       }
 
+      if (error) {
+        console.error("AuthContext: profile query error:", error.message, "code:", error.code, "details:", error.details, "hint:", error.hint);
+      }
+
       // No profile found — auto-create via server action (bypasses RLS)
-      console.warn("AuthContext: no profile found for", userId, "— attempting auto-create");
+      console.warn("AuthContext: no profile from query — calling ensureProfile server action");
       try {
         const result = await ensureProfile();
+        console.log("AuthContext: ensureProfile returned — profile:", !!result.profile, "error:", result.error || "none");
         if (result.profile) {
-          console.log("AuthContext: auto-created profile:", result.profile.username);
+          console.log("AuthContext: got profile from ensureProfile:", result.profile.username);
           return result.profile;
         }
-        console.error("AuthContext: ensureProfile returned no profile:", result.error);
       } catch (err) {
         console.error("AuthContext: ensureProfile threw:", err);
       }
     }
 
-    console.error("AuthContext: all attempts to load/create profile failed for", userId);
+    console.error("AuthContext: ALL attempts failed for", userId, "— returning null");
     return null;
   }
 

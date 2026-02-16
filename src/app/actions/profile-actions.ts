@@ -18,11 +18,13 @@ interface ActionResult {
  * creates one using the service role client to bypass RLS.
  */
 export async function ensureProfile(): Promise<{ profile: Profile | null; error?: string }> {
+  console.log("ensureProfile: called");
   const supabase = createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  console.log("ensureProfile: getUser result — user:", user?.id || "null", "email:", user?.email || "null");
   if (!user) {
     console.warn("ensureProfile: getUser() returned no user — cookies may not be set yet");
     return { profile: null, error: "Not authenticated" };
@@ -31,13 +33,18 @@ export async function ensureProfile(): Promise<{ profile: Profile | null; error?
   // Try to fetch existing profile using admin client (bypasses RLS, avoids any
   // edge-case where the server-side anon client doesn't see the row yet)
   const admin = createAdminClient();
-  const { data: existing } = await admin
+  const { data: existing, error: existingError } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  if (existing) return { profile: existing as Profile };
+  console.log("ensureProfile: admin fetch — found:", !!existing, "error:", existingError?.message || "none");
+
+  if (existing) {
+    console.log("ensureProfile: returning existing profile:", (existing as Profile).username);
+    return { profile: existing as Profile };
+  }
 
   // No profile exists — create one using admin client (bypasses RLS)
   console.warn("ensureProfile: No profile found for", user.id, "— creating one");

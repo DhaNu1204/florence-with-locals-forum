@@ -67,15 +67,15 @@ export function Navbar({ categories }: NavbarProps) {
   }, [isLoading]);
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch {
-      // Ensure we still navigate even if signOut partially fails
-    }
     setUserDropdownOpen(false);
     setMobileOpen(false);
-    router.refresh();
-    router.push("/");
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("Navbar: signOut error:", err);
+    }
+    // Hard navigate to clear all client state reliably
+    window.location.href = "/";
   };
 
   return (
