@@ -232,13 +232,48 @@ export function Navbar({ categories }: NavbarProps) {
                 </div>
               </>
             ) : user && !profile ? (
-              <div className="flex items-center gap-2">
+              <>
                 <NotificationBell />
-                <Avatar
-                  name={user.email?.split("@")[0] || "U"}
-                  size="sm"
-                />
-              </div>
+                <div ref={userRef} className="relative">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-1.5 rounded-lg p-1.5 transition-colors hover:bg-light-stone"
+                  >
+                    <Avatar
+                      name={user.email?.split("@")[0] || "U"}
+                      size="sm"
+                    />
+                    <ChevronDownIcon
+                      className={`h-4 w-4 text-dark-text/50 transition-transform ${userDropdownOpen ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 top-full z-50 mt-1 min-w-[220px] w-auto rounded-lg border border-gray-100 bg-white py-2 shadow-lg">
+                      <div className="border-b border-light-stone px-4 pb-2 mb-1">
+                        <p className="text-base font-medium text-dark-text whitespace-nowrap">
+                          {user.email?.split("@")[0] || "User"}
+                        </p>
+                        <p className="text-sm text-dark-text/50 whitespace-nowrap">
+                          {user.email || ""}
+                        </p>
+                      </div>
+                      <DropdownLink
+                        href="/settings"
+                        onClick={() => setUserDropdownOpen(false)}
+                      >
+                        Settings
+                      </DropdownLink>
+                      <div className="my-1 border-t border-light-stone" />
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full px-4 py-3 text-left text-base text-red-600 whitespace-nowrap transition-colors hover:bg-red-50"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <>
                 <Button
