@@ -7,6 +7,8 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/utils/rateLimit";
 import { createPostSchema, validate } from "@/lib/validations";
 import { createMentionNotifications } from "./notification-actions";
 import { trackContentImages } from "./photo-actions";
+import { sendNotificationEmail } from "@/lib/email/send-notifications";
+import { extractMentions } from "@/lib/utils/mentions";
 
 interface ActionResult {
   error?: string;
@@ -31,7 +33,7 @@ export async function createPost(
   // Rate limit (stricter for new users)
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_banned, created_at")
+    .select("id, is_banned, created_at, username")
     .eq("id", user.id)
     .single();
 
@@ -52,7 +54,7 @@ export async function createPost(
 
   const { data: thread } = await supabase
     .from("threads")
-    .select("id, is_locked, author_id")
+    .select("id, is_locked, author_id, title, slug")
     .eq("id", threadId)
     .eq("is_deleted", false)
     .single();
@@ -99,6 +101,44 @@ export async function createPost(
 
   // Create mention notifications
   await createMentionNotifications(sanitizedContent, user.id, "post", post.id);
+
+  // Email notifications (fire-and-forget, wrapped so it never crashes the action)
+  try {
+    if (thread.author_id !== user.id) {
+      sendNotificationEmail({
+        recipientId: thread.author_id,
+        actorId: user.id,
+        type: "reply",
+        actorUsername: profile.username,
+        threadTitle: thread.title,
+        threadSlug: thread.slug,
+        contentPreview: sanitizedContent,
+      }).catch(() => {});
+    }
+
+    const mentionedUsernames = extractMentions(sanitizedContent);
+    if (mentionedUsernames.length > 0) {
+      const { data: mentionedUsers } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("username", mentionedUsernames);
+
+      for (const mentioned of mentionedUsers ?? []) {
+        sendNotificationEmail({
+          recipientId: mentioned.id,
+          actorId: user.id,
+          type: "mention",
+          actorUsername: profile.username,
+          threadTitle: thread.title,
+          threadSlug: thread.slug,
+          contentType: "post",
+          contentPreview: sanitizedContent,
+        }).catch(() => {});
+      }
+    }
+  } catch {
+    // Email notifications must never break post creation
+  }
 
   // Track inline editor images in the photos table
   await trackContentImages(sanitizedContent, user.id, {

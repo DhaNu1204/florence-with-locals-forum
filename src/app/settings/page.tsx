@@ -38,6 +38,10 @@ export default function SettingsPage() {
     text: string;
   } | null>(null);
 
+  // Email notifications state
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [emailSaving, setEmailSaving] = useState(false);
+
   // Password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -62,6 +66,7 @@ export default function SettingsPage() {
       setBio(profile.bio || "");
       setLocation(profile.location || "");
       setWebsite(profile.website || "");
+      setEmailNotifications(profile.email_notifications ?? true);
     }
   }, [profile]);
 
@@ -128,6 +133,23 @@ export default function SettingsPage() {
       await refreshProfile();
     }
     setAvatarUploading(false);
+  };
+
+  const handleEmailToggle = async () => {
+    const newValue = !emailNotifications;
+    setEmailNotifications(newValue);
+    setEmailSaving(true);
+
+    const formData = new FormData();
+    formData.set("username", username);
+    formData.set("full_name", fullName);
+    formData.set("bio", bio);
+    formData.set("location", location);
+    formData.set("website", website);
+    formData.set("email_notifications", String(newValue));
+
+    await updateProfile(formData);
+    setEmailSaving(false);
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -298,6 +320,42 @@ export default function SettingsPage() {
             Save Changes
           </Button>
         </form>
+      </section>
+
+      {/* Email Notifications */}
+      <section className="mt-6 rounded-lg bg-white p-6 shadow-sm ring-1 ring-light-stone">
+        <h2 className="text-xl font-semibold text-dark-text">
+          Email Notifications
+        </h2>
+        <p className="mt-2 text-base text-dark-text/60">
+          Receive email notifications when someone replies to your threads,
+          mentions you, or likes your content.
+        </p>
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={emailNotifications}
+            disabled={emailSaving}
+            onClick={handleEmailToggle}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-terracotta/30 focus:ring-offset-2 disabled:opacity-50 ${
+              emailNotifications ? "bg-terracotta" : "bg-dark-text/20"
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                emailNotifications ? "translate-x-5" : "translate-x-0"
+              }`}
+            />
+          </button>
+          <span className="text-base text-dark-text/70">
+            {emailSaving
+              ? "Saving..."
+              : emailNotifications
+                ? "Enabled"
+                : "Disabled"}
+          </span>
+        </div>
       </section>
 
       {/* Password */}

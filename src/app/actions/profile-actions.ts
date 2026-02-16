@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sanitizeHtml } from "@/lib/utils/sanitizeHtml";
 import type { Profile } from "@/types";
+import { sendWelcomeEmail } from "@/lib/email/send-notifications";
 
 interface ActionResult {
   error?: string;
@@ -67,6 +68,10 @@ export async function ensureProfile(): Promise<{ profile: Profile | null; error?
   }
 
   console.log("ensureProfile: Created profile", newProfile?.username, "for", user.id);
+
+  // Send welcome email (fire-and-forget)
+  sendWelcomeEmail(user.id, username).catch(() => {});
+
   return { profile: newProfile as Profile };
 }
 
@@ -83,6 +88,9 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
   const bio = (formData.get("bio") as string)?.trim() || null;
   const location = (formData.get("location") as string)?.trim() || null;
   const website = (formData.get("website") as string)?.trim() || null;
+  const emailNotificationsRaw = formData.get("email_notifications");
+  const email_notifications =
+    emailNotificationsRaw !== null ? emailNotificationsRaw === "true" : undefined;
 
   if (!username || username.length < 3 || username.length > 30) {
     return { error: "Username must be between 3 and 30 characters." };
@@ -118,15 +126,20 @@ export async function updateProfile(formData: FormData): Promise<ActionResult> {
     return { error: "Website must start with http:// or https://" };
   }
 
+  const updateData: Record<string, unknown> = {
+    username,
+    full_name,
+    bio: sanitizedBio,
+    location,
+    website,
+  };
+  if (email_notifications !== undefined) {
+    updateData.email_notifications = email_notifications;
+  }
+
   const { error: updateError } = await supabase
     .from("profiles")
-    .update({
-      username,
-      full_name,
-      bio: sanitizedBio,
-      location,
-      website,
-    })
+    .update(updateData)
     .eq("id", user.id);
 
   if (updateError) {

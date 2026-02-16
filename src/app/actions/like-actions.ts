@@ -2,6 +2,7 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { createClient } from "@/lib/supabase/server";
+import { sendNotificationEmail } from "@/lib/email/send-notifications";
 
 interface LikeResult {
   error?: string;
@@ -21,7 +22,7 @@ export async function toggleLike(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_banned")
+    .select("id, is_banned, username")
     .eq("id", user.id)
     .single();
 
@@ -96,9 +97,55 @@ export async function toggleLike(
       reference_id: targetId,
       actor_id: user.id,
     });
+
+    // Email notification (fire-and-forget, wrapped so it never crashes the action)
+    try {
+      const threadInfo = await getThreadInfoForLike(supabase, targetType, targetId);
+      if (threadInfo) {
+        sendNotificationEmail({
+          recipientId: authorId,
+          actorId: user.id,
+          type: "like",
+          actorUsername: profile.username,
+          threadTitle: threadInfo.title,
+          threadSlug: threadInfo.slug,
+          contentType: targetType,
+        }).catch(() => {});
+      }
+    } catch {
+      // Email notifications must never break the like action
+    }
   }
 
   return { liked: true };
+}
+
+async function getThreadInfoForLike(
+  supabase: ReturnType<typeof createClient>,
+  targetType: "thread" | "post",
+  targetId: string
+): Promise<{ title: string; slug: string } | null> {
+  if (targetType === "thread") {
+    const { data } = await supabase
+      .from("threads")
+      .select("title, slug")
+      .eq("id", targetId)
+      .single();
+    return data ?? null;
+  }
+  // For posts, look up the parent thread
+  const { data: post } = await supabase
+    .from("posts")
+    .select("thread_id")
+    .eq("id", targetId)
+    .single();
+  if (!post) return null;
+  const { data: thread } = await supabase
+    .from("threads")
+    .select("title, slug")
+    .eq("id", post.thread_id)
+    .single();
+  return thread ?? null;
 }
 
 async function getContentAuthorId(

@@ -8,6 +8,8 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/utils/rateLimit";
 import { createThreadSchema, validate } from "@/lib/validations";
 import { createMentionNotifications } from "./notification-actions";
 import { trackContentImages } from "./photo-actions";
+import { sendNotificationEmail } from "@/lib/email/send-notifications";
+import { extractMentions } from "@/lib/utils/mentions";
 
 interface ActionResult {
   error?: string;
@@ -44,7 +46,7 @@ export async function createThread(
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, is_banned")
+    .select("id, is_banned, username")
     .eq("id", user.id)
     .single();
 
@@ -103,6 +105,32 @@ export async function createThread(
 
   // Create mention notifications
   await createMentionNotifications(sanitizedContent, user.id, "thread", thread.id);
+
+  // Email mention notifications (fire-and-forget, wrapped so it never crashes the action)
+  try {
+    const mentionedUsernames = extractMentions(sanitizedContent);
+    if (mentionedUsernames.length > 0) {
+      const { data: mentionedUsers } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("username", mentionedUsernames);
+
+      for (const mentioned of mentionedUsers ?? []) {
+        sendNotificationEmail({
+          recipientId: mentioned.id,
+          actorId: user.id,
+          type: "mention",
+          actorUsername: profile.username,
+          threadTitle: trimmedTitle,
+          threadSlug: thread.slug,
+          contentType: "thread",
+          contentPreview: sanitizedContent,
+        }).catch(() => {});
+      }
+    }
+  } catch {
+    // Email notifications must never break thread creation
+  }
 
   return { slug: thread.slug, threadId: thread.id };
 }

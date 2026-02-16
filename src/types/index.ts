@@ -44,6 +44,7 @@ export type Profile = {
   last_seen_at: string;
   is_banned: boolean;
   ban_reason: string | null;
+  email_notifications: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -163,6 +164,7 @@ export type ProfileInsert = {
   last_seen_at?: string;
   is_banned?: boolean;
   ban_reason?: string | null;
+  email_notifications?: boolean;
 };
 
 export type CategoryInsert = {
@@ -267,6 +269,7 @@ export type ProfileUpdate = {
   last_seen_at?: string;
   is_banned?: boolean;
   ban_reason?: string | null;
+  email_notifications?: boolean;
 };
 
 export type CategoryUpdate = {
