@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { ThreadCard } from "@/components/forum/ThreadCard";
+import { ThreadList } from "@/components/forum/ThreadList";
 import { Button } from "@/components/ui/Button";
 import { SocialSidebar } from "@/components/layout/SocialSidebar";
+import type { ThreadListItem } from "@/app/actions/thread-actions";
 
 interface PageProps {
   params: { slug: string };
@@ -52,10 +53,8 @@ interface ThreadRow {
   photos: { id: string }[] | null;
 }
 
-export default async function CategoryPage({ params, searchParams }: PageProps) {
+export default async function CategoryPage({ params }: PageProps) {
   const supabase = createClient();
-  const page = Math.max(1, parseInt(searchParams.page || "1", 10));
-  const offset = (page - 1) * PAGE_SIZE;
 
   const { data: category } = await supabase
     .from("categories")
@@ -69,6 +68,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
   const { data: user } = await supabase.auth.getUser();
   const isLoggedIn = !!user.user;
 
+  // Fetch first page + 1 extra to detect if there are more
   const { data: threadsRaw } = await supabase
     .from("threads")
     .select(
@@ -79,10 +79,30 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
     .order("is_pinned", { ascending: false })
     .order("last_reply_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
-    .range(offset, offset + PAGE_SIZE - 1);
+    .range(0, PAGE_SIZE);
 
-  const threads = (threadsRaw as unknown as ThreadRow[]) ?? [];
-  const totalPages = Math.ceil(category.thread_count / PAGE_SIZE);
+  const raw = (threadsRaw as unknown as ThreadRow[]) ?? [];
+  const hasMore = raw.length > PAGE_SIZE;
+  const firstPage = hasMore ? raw.slice(0, PAGE_SIZE) : raw;
+
+  // Map to ThreadListItem shape for the client component
+  const initialThreads: ThreadListItem[] = firstPage.map((t) => ({
+    id: t.id,
+    title: t.title,
+    slug: t.slug,
+    content: t.content,
+    is_pinned: t.is_pinned,
+    is_locked: t.is_locked,
+    reply_count: t.reply_count,
+    view_count: t.view_count,
+    like_count: t.like_count,
+    created_at: t.created_at,
+    last_reply_at: t.last_reply_at,
+    authorUsername: t.profiles?.username ?? "unknown",
+    authorAvatarUrl: t.profiles?.avatar_url ?? null,
+    authorRole: t.profiles?.role ?? "member",
+    hasPhotos: !!t.photos && t.photos.length > 0,
+  }));
 
   return (
     <div className="w-full overflow-hidden">
@@ -109,6 +129,9 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
                 {category.description}
               </p>
             )}
+            <p className="mt-1 text-sm text-dark-text/40">
+              {category.thread_count} {category.thread_count === 1 ? "thread" : "threads"}
+            </p>
           </div>
         </div>
 
@@ -122,29 +145,14 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
       <div className="flex flex-col lg:flex-row lg:gap-8 w-full overflow-hidden">
         {/* Thread list */}
         <div className="flex-1 min-w-0">
-          {threads.length > 0 ? (
-            <div className="space-y-4">
-              {threads.map((t) => (
-                <ThreadCard
-                  key={t.id}
-                  id={t.id}
-                  title={t.title}
-                  slug={t.slug}
-                  content={t.content}
-                  isPinned={t.is_pinned}
-                  isLocked={t.is_locked}
-                  replyCount={t.reply_count}
-                  viewCount={t.view_count}
-                  likeCount={t.like_count}
-                  createdAt={t.created_at}
-                  lastReplyAt={t.last_reply_at}
-                  authorUsername={t.profiles?.username ?? "unknown"}
-                  authorAvatarUrl={t.profiles?.avatar_url ?? null}
-                  authorRole={t.profiles?.role ?? "member"}
-                  hasPhotos={!!t.photos && t.photos.length > 0}
-                />
-              ))}
-            </div>
+          {initialThreads.length > 0 ? (
+            <ThreadList
+              initialThreads={initialThreads}
+              categoryId={category.id}
+              categorySlug={category.slug}
+              initialHasMore={hasMore}
+              isLoggedIn={isLoggedIn}
+            />
           ) : (
             <div className="rounded-lg border border-light-stone bg-white p-12 text-center">
               <p className="text-lg text-dark-text/50">No discussions yet.</p>
@@ -154,31 +162,6 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
               {isLoggedIn && (
                 <Link href={`/c/${category.slug}/new`} className="mt-4 inline-block">
                   <Button>Start a Discussion</Button>
-                </Link>
-              )}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-2">
-              {page > 1 && (
-                <Link
-                  href={`/c/${category.slug}?page=${page - 1}`}
-                  className="rounded-lg border border-light-stone px-4 py-2.5 text-base text-dark-text/60 transition-colors hover:bg-light-stone"
-                >
-                  Previous
-                </Link>
-              )}
-              <span className="px-4 py-2.5 text-base text-dark-text/50">
-                Page {page} of {totalPages}
-              </span>
-              {page < totalPages && (
-                <Link
-                  href={`/c/${category.slug}?page=${page + 1}`}
-                  className="rounded-lg border border-light-stone px-4 py-2.5 text-base text-dark-text/60 transition-colors hover:bg-light-stone"
-                >
-                  Next
                 </Link>
               )}
             </div>

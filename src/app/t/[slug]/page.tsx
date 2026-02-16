@@ -11,6 +11,7 @@ import { PostsList } from "./PostsList";
 import { ThreadPhotos } from "@/components/forum/ThreadPhotos";
 import { PhotoWithUploader } from "@/types";
 import { SocialSidebar } from "@/components/layout/SocialSidebar";
+import type { ReplyListItem } from "@/app/actions/post-actions";
 
 interface PageProps {
   params: { slug: string };
@@ -115,7 +116,9 @@ export default async function ThreadPage({ params }: PageProps) {
 
   const typedThread = thread as unknown as ThreadData;
 
-  // Parallel fetches
+  const REPLY_PAGE_SIZE = 20;
+
+  // Parallel fetches — replies are now paginated (first page + 1 to detect hasMore)
   const [categoryRes, authorRes, postsRes, userRes, photosRes] = await Promise.all([
     supabase
       .from("categories")
@@ -132,7 +135,8 @@ export default async function ThreadPage({ params }: PageProps) {
       .select("id, content, is_solution, like_count, created_at, updated_at, author_id, profiles:author_id(id, username, avatar_url, role, reputation_points)")
       .eq("thread_id", typedThread.id)
       .eq("is_deleted", false)
-      .order("created_at", { ascending: true }),
+      .order("created_at", { ascending: true })
+      .range(0, REPLY_PAGE_SIZE),
     supabase.auth.getUser(),
     supabase
       .from("photos")
@@ -146,7 +150,9 @@ export default async function ThreadPage({ params }: PageProps) {
 
   const category = categoryRes.data as unknown as CategoryData | null;
   const author = authorRes.data as unknown as AuthorProfile | null;
-  const posts = (postsRes.data as unknown as PostRow[]) ?? [];
+  const allPostsRaw = (postsRes.data as unknown as PostRow[]) ?? [];
+  const repliesHasMore = allPostsRaw.length > REPLY_PAGE_SIZE;
+  const posts = repliesHasMore ? allPostsRaw.slice(0, REPLY_PAGE_SIZE) : allPostsRaw;
   const currentUser = userRes.data.user;
   const threadPhotos = (photosRes.data || []) as unknown as PhotoWithUploader[];
 
@@ -389,7 +395,9 @@ export default async function ThreadPage({ params }: PageProps) {
         <PostsList
           threadId={typedThread.id}
           isLocked={typedThread.is_locked}
-          posts={posts.map((p) => ({
+          totalReplyCount={typedThread.reply_count}
+          initialHasMore={repliesHasMore}
+          posts={posts.map((p): ReplyListItem => ({
             id: p.id,
             content: p.content,
             isSolution: p.is_solution,

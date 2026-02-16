@@ -109,6 +109,97 @@ export async function createPost(
   return { postId: post.id };
 }
 
+// ---------------------------------------------------------------------------
+// getThreadReplies — paginated reply fetch for thread pages
+// ---------------------------------------------------------------------------
+
+export type ReplyListItem = {
+  id: string;
+  content: string;
+  isSolution: boolean;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+  authorId: string;
+  authorUsername: string;
+  authorAvatarUrl: string | null;
+  authorRole: string;
+  authorReputation: number;
+  isLikedByUser: boolean;
+};
+
+export async function getThreadReplies(
+  threadId: string,
+  page: number,
+  pageSize: number = 20,
+  currentUserId?: string
+): Promise<{ replies: ReplyListItem[]; hasMore: boolean }> {
+  const supabase = createClient();
+  const offset = page * pageSize;
+
+  const { data } = await supabase
+    .from("posts")
+    .select(
+      "id, content, is_solution, like_count, created_at, updated_at, author_id, profiles:author_id(id, username, avatar_url, role, reputation_points)"
+    )
+    .eq("thread_id", threadId)
+    .eq("is_deleted", false)
+    .order("created_at", { ascending: true })
+    .range(offset, offset + pageSize);
+
+  type RawPost = {
+    id: string;
+    content: string;
+    is_solution: boolean;
+    like_count: number;
+    created_at: string;
+    updated_at: string;
+    author_id: string;
+    profiles: {
+      id: string;
+      username: string;
+      avatar_url: string | null;
+      role: string;
+      reputation_points: number;
+    } | null;
+  };
+
+  const raw = (data as unknown as RawPost[]) ?? [];
+  const hasMore = raw.length > pageSize;
+  const posts = hasMore ? raw.slice(0, pageSize) : raw;
+
+  // Check which posts the current user has liked
+  const likedPostIds = new Set<string>();
+  if (currentUserId && posts.length > 0) {
+    const { data: likes } = await supabase
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", currentUserId)
+      .in("post_id", posts.map((p) => p.id));
+
+    for (const like of likes ?? []) {
+      if (like.post_id) likedPostIds.add(like.post_id);
+    }
+  }
+
+  const replies: ReplyListItem[] = posts.map((p) => ({
+    id: p.id,
+    content: p.content,
+    isSolution: p.is_solution,
+    likeCount: p.like_count,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at,
+    authorId: p.author_id,
+    authorUsername: p.profiles?.username ?? "unknown",
+    authorAvatarUrl: p.profiles?.avatar_url ?? null,
+    authorRole: p.profiles?.role ?? "member",
+    authorReputation: p.profiles?.reputation_points ?? 0,
+    isLikedByUser: likedPostIds.has(p.id),
+  }));
+
+  return { replies, hasMore };
+}
+
 export async function deletePost(postId: string): Promise<ActionResult> {
   const supabase = createClient();
 

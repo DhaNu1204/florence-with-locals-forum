@@ -1,28 +1,17 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { PostItem } from "@/components/forum/PostItem";
 import { ReplyForm } from "@/components/forum/ReplyForm";
-
-interface PostData {
-  id: string;
-  content: string;
-  isSolution: boolean;
-  likeCount: number;
-  createdAt: string;
-  updatedAt: string;
-  authorId: string;
-  authorUsername: string;
-  authorAvatarUrl: string | null;
-  authorRole: string;
-  authorReputation: number;
-  isLikedByUser: boolean;
-}
+import { getThreadReplies, type ReplyListItem } from "@/app/actions/post-actions";
 
 interface PostsListProps {
   threadId: string;
   isLocked: boolean;
-  posts: PostData[];
+  posts: ReplyListItem[];
+  totalReplyCount: number;
+  initialHasMore: boolean;
   currentUserId?: string;
   currentUserRole?: string;
   currentUsername?: string;
@@ -32,13 +21,28 @@ interface PostsListProps {
 export function PostsList({
   threadId,
   isLocked,
-  posts,
+  posts: initialPosts,
+  totalReplyCount,
+  initialHasMore,
   currentUserId,
   currentUserRole,
   currentUsername,
   currentAvatarUrl,
 }: PostsListProps) {
   const router = useRouter();
+  const [posts, setPosts] = useState(initialPosts);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [page, setPage] = useState(1);
+  const [isPending, startTransition] = useTransition();
+
+  const loadMore = () => {
+    startTransition(async () => {
+      const result = await getThreadReplies(threadId, page, 20, currentUserId);
+      setPosts((prev) => [...prev, ...result.replies]);
+      setHasMore(result.hasMore);
+      setPage((prev) => prev + 1);
+    });
+  };
 
   const handleReplyCreated = () => {
     router.refresh();
@@ -49,7 +53,7 @@ export function PostsList({
       {posts.length > 0 && (
         <>
           <h2 className="mb-4 font-heading text-xl font-semibold text-tuscan-brown">
-            {posts.length} {posts.length === 1 ? "Reply" : "Replies"}
+            {totalReplyCount} {totalReplyCount === 1 ? "Reply" : "Replies"}
           </h2>
 
           <div className="space-y-4">
@@ -73,6 +77,25 @@ export function PostsList({
               />
             ))}
           </div>
+
+          {hasMore && (
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={loadMore}
+                disabled={isPending}
+                className="rounded-lg border border-light-stone bg-white px-6 py-2.5 text-base font-medium text-tuscan-brown transition-colors hover:border-terracotta/30 hover:bg-light-stone disabled:opacity-50"
+              >
+                {isPending ? (
+                  <span className="flex items-center gap-2">
+                    <LoadingSpinner />
+                    Loading…
+                  </span>
+                ) : (
+                  "Load More Replies"
+                )}
+              </button>
+            </div>
+          )}
         </>
       )}
 
@@ -88,5 +111,29 @@ export function PostsList({
         />
       </div>
     </section>
+  );
+}
+
+function LoadingSpinner() {
+  return (
+    <svg
+      className="h-4 w-4 animate-spin"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
   );
 }

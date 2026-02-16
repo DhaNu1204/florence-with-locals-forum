@@ -205,6 +205,89 @@ export async function updateThread(
   return {};
 }
 
+// ---------------------------------------------------------------------------
+// getThreadsByCategory — paginated thread fetch for category pages
+// ---------------------------------------------------------------------------
+
+export type ThreadListItem = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  is_pinned: boolean;
+  is_locked: boolean;
+  reply_count: number;
+  view_count: number;
+  like_count: number;
+  created_at: string;
+  last_reply_at: string | null;
+  authorUsername: string;
+  authorAvatarUrl: string | null;
+  authorRole: string;
+  hasPhotos: boolean;
+};
+
+export async function getThreadsByCategory(
+  categoryId: number,
+  page: number,
+  pageSize: number = 20
+): Promise<{ threads: ThreadListItem[]; hasMore: boolean }> {
+  const supabase = createClient();
+  const offset = page * pageSize;
+
+  const { data } = await supabase
+    .from("threads")
+    .select(
+      "id, title, slug, content, is_pinned, is_locked, reply_count, view_count, like_count, created_at, last_reply_at, profiles:author_id(username, avatar_url, role), photos(id)"
+    )
+    .eq("category_id", categoryId)
+    .eq("is_deleted", false)
+    .order("is_pinned", { ascending: false })
+    .order("last_reply_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + pageSize);
+
+  type RawThread = {
+    id: string;
+    title: string;
+    slug: string;
+    content: string;
+    is_pinned: boolean;
+    is_locked: boolean;
+    reply_count: number;
+    view_count: number;
+    like_count: number;
+    created_at: string;
+    last_reply_at: string | null;
+    profiles: { username: string; avatar_url: string | null; role: string } | null;
+    photos: { id: string }[] | null;
+  };
+
+  const raw = (data as unknown as RawThread[]) ?? [];
+
+  // We fetch pageSize+1 to check if there are more
+  const hasMore = raw.length > pageSize;
+  const threads = (hasMore ? raw.slice(0, pageSize) : raw).map((t) => ({
+    id: t.id,
+    title: t.title,
+    slug: t.slug,
+    content: t.content,
+    is_pinned: t.is_pinned,
+    is_locked: t.is_locked,
+    reply_count: t.reply_count,
+    view_count: t.view_count,
+    like_count: t.like_count,
+    created_at: t.created_at,
+    last_reply_at: t.last_reply_at,
+    authorUsername: t.profiles?.username ?? "unknown",
+    authorAvatarUrl: t.profiles?.avatar_url ?? null,
+    authorRole: t.profiles?.role ?? "member",
+    hasPhotos: !!t.photos && t.photos.length > 0,
+  }));
+
+  return { threads, hasMore };
+}
+
 export async function incrementViewCount(threadId: string): Promise<void> {
   const supabase = createClient();
   // Simple increment by reading current value and updating
