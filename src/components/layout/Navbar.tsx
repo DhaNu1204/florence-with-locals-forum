@@ -66,7 +66,7 @@ export function Navbar({ categories }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b-2 border-terracotta/20 bg-white shadow-sm overflow-x-hidden">
+    <header className="sticky top-0 z-40 w-full border-b-2 border-terracotta/20 bg-white shadow-sm">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0 min-w-0">

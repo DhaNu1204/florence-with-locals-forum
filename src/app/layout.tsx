@@ -67,7 +67,7 @@ export default async function RootLayout({
     <html lang="en" className={`${inter.variable} ${playfair.variable} overflow-x-hidden`}>
       <body className="font-body text-dark-text bg-warm-cream antialiased overflow-x-hidden max-w-[100vw]">
         <AuthProvider>
-          <div className="flex min-h-screen flex-col w-full max-w-full overflow-x-hidden">
+          <div className="flex min-h-screen flex-col w-full max-w-full">
             <Navbar categories={categories} />
             <main className="flex-1 w-full min-w-0 max-w-full overflow-x-hidden">{children}</main>
             <Footer />
