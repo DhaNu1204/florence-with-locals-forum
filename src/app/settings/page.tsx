@@ -89,6 +89,15 @@ export default function SettingsPage() {
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-terracotta border-t-transparent" />
         <p className="text-base text-dark-text/60">Setting up your profile...</p>
+        <Button
+          variant="secondary"
+          className="mt-2"
+          onClick={async () => {
+            await refreshProfile();
+          }}
+        >
+          Retry
+        </Button>
       </div>
     );
   }

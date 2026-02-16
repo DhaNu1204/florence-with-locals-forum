@@ -31,29 +31,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  async function fetchProfile(userId: string) {
+  async function fetchProfile(userId: string, retries = 2) {
     console.log("AuthContext: fetching profile for", userId);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
 
-    if (data) {
-      console.log("AuthContext: profile loaded:", data?.username);
-      return data as Profile;
-    }
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      // On retry, wait a moment for the DB trigger / cookies to settle
+      if (attempt > 0) {
+        console.log("AuthContext: retry", attempt, "for", userId);
+        await new Promise((r) => setTimeout(r, 1000));
+      }
 
-    // No profile found — auto-create via server action (bypasses RLS)
-    if (error) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (data) {
+        console.log("AuthContext: profile loaded:", data?.username);
+        return data as Profile;
+      }
+
+      // No profile found — auto-create via server action (bypasses RLS)
       console.warn("AuthContext: no profile found for", userId, "— attempting auto-create");
+      try {
+        const result = await ensureProfile();
+        if (result.profile) {
+          console.log("AuthContext: auto-created profile:", result.profile.username);
+          return result.profile;
+        }
+        console.error("AuthContext: ensureProfile returned no profile:", result.error);
+      } catch (err) {
+        console.error("AuthContext: ensureProfile threw:", err);
+      }
     }
-    const result = await ensureProfile();
-    if (result.profile) {
-      console.log("AuthContext: auto-created profile:", result.profile.username);
-      return result.profile;
-    }
-    console.error("AuthContext: failed to create profile:", result.error);
+
+    console.error("AuthContext: all attempts to load/create profile failed for", userId);
     return null;
   }
 

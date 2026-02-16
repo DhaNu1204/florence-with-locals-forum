@@ -23,10 +23,15 @@ export async function ensureProfile(): Promise<{ profile: Profile | null; error?
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { profile: null, error: "Not authenticated" };
+  if (!user) {
+    console.warn("ensureProfile: getUser() returned no user — cookies may not be set yet");
+    return { profile: null, error: "Not authenticated" };
+  }
 
-  // Try to fetch existing profile
-  const { data: existing } = await supabase
+  // Try to fetch existing profile using admin client (bypasses RLS, avoids any
+  // edge-case where the server-side anon client doesn't see the row yet)
+  const admin = createAdminClient();
+  const { data: existing } = await admin
     .from("profiles")
     .select("*")
     .eq("id", user.id)
@@ -37,7 +42,6 @@ export async function ensureProfile(): Promise<{ profile: Profile | null; error?
   // No profile exists — create one using admin client (bypasses RLS)
   console.warn("ensureProfile: No profile found for", user.id, "— creating one");
 
-  const admin = createAdminClient();
   const metadata = user.user_metadata || {};
 
   // Generate username from email prefix (must match DB constraint: ^[a-z][a-z0-9-]*$)
@@ -57,11 +61,24 @@ export async function ensureProfile(): Promise<{ profile: Profile | null; error?
       username,
       full_name: metadata.full_name || metadata.name || null,
       avatar_url: metadata.avatar_url || metadata.picture || null,
+      email_notifications: true,
     })
     .select()
     .single();
 
   if (error) {
+    // If it's a unique constraint violation, the trigger likely just created it
+    // — try to fetch again
+    if (error.code === "23505") {
+      console.log("ensureProfile: conflict on insert — fetching existing profile");
+      const { data: retryProfile } = await admin
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      if (retryProfile) return { profile: retryProfile as Profile };
+    }
+
     Sentry.captureException(error, { tags: { action: "ensureProfile" } });
     console.error("ensureProfile: Failed to create profile:", error.message);
     return { profile: null, error: error.message };

@@ -37,7 +37,7 @@ export async function createPost(
     .eq("id", user.id)
     .single();
 
-  if (!profile) return { error: "Profile not found." };
+  if (!profile) return { error: "Your profile is still being set up. Please refresh the page and try again." };
   if (profile.is_banned) return { error: "Your account has been suspended." };
 
   const isNewUser =
