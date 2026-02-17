@@ -32,8 +32,4 @@ export const env = {
 export const serverEnv = {
   SUPABASE_SERVICE_ROLE_KEY: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
   RESEND_API_KEY: optionalEnv("RESEND_API_KEY", ""),
-  PLAUSIBLE_DOMAIN: optionalEnv(
-    "PLAUSIBLE_DOMAIN",
-    "forum.florencewithlocals.com"
-  ),
 } as const;

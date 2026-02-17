@@ -32,9 +32,8 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL || "https://forum.florencewithlocals.com"
   ),
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
   },
   openGraph: {
     type: "website",
