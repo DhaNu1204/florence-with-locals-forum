@@ -36,9 +36,6 @@ export const metadata: Metadata = {
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
   },
-  verification: {
-    google: "PLACEHOLDER_VERIFICATION_CODE",
-  },
   openGraph: {
     type: "website",
     locale: "en_US",
