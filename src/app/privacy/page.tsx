@@ -41,8 +41,10 @@ export default function PrivacyPage() {
             you create on the forum.
           </li>
           <li>
-            <strong>Usage data:</strong> Page views and basic analytics
-            collected through Plausible Analytics (no personal data or cookies).
+            <strong>Usage data:</strong> Page views and basic usage analytics
+            collected through Google Analytics (with your consent). IP
+            addresses are anonymized and no personal data is shared with
+            third parties.
           </li>
         </ul>
 
@@ -57,10 +59,16 @@ export default function PrivacyPage() {
 
         <h2>3. Cookies</h2>
         <p>
-          We use only essential cookies required for authentication and session
+          We use essential cookies required for authentication and session
           management through Supabase. We do not use advertising or tracking
-          cookies. Our analytics provider, Plausible, is completely
-          cookie-free and does not track individual users. For more details,
+          cookies.
+        </p>
+        <p>
+          We use Google Analytics to understand how visitors interact with our
+          forum. This service uses cookies to collect anonymous usage data
+          with anonymized IP addresses. Google Analytics cookies are only set
+          when you consent to analytics cookies via our cookie banner. You can
+          opt out at any time via our cookie settings. For more details,
           see our{" "}
           <Link href="/cookie-policy" className="text-terracotta hover:underline">
             Cookie Policy
@@ -79,8 +87,8 @@ export default function PrivacyPage() {
             <strong>Vercel</strong> &mdash; Website hosting and deployment
           </li>
           <li>
-            <strong>Plausible Analytics</strong> &mdash; Privacy-friendly,
-            GDPR-compliant web analytics (no personal data collected, no cookies)
+            <strong>Google Analytics</strong> &mdash; Web analytics with
+            anonymized IP addresses (only active with your consent)
           </li>
           <li>
             <strong>Resend</strong> &mdash; Transactional email delivery

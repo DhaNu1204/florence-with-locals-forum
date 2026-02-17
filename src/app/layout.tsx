@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/supabase/auth-context";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/layout/CookieConsent";
+import { GoogleAnalytics } from "@/components/layout/GoogleAnalytics";
 import SentryUserProvider from "@/components/SentryUserProvider";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
@@ -34,6 +35,9 @@ export const metadata: Metadata = {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },
     ],
+  },
+  verification: {
+    google: "PLACEHOLDER_VERIFICATION_CODE",
   },
   openGraph: {
     type: "website",
@@ -74,6 +78,7 @@ export default async function RootLayout({
             <main className="flex-1 w-full min-w-0 max-w-full overflow-x-hidden">{children}</main>
             <Footer />
             <CookieConsent />
+            <GoogleAnalytics />
           </div>
         </AuthProvider>
       </body>

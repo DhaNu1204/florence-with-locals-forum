@@ -56,19 +56,59 @@ export default function CookiePolicyPage() {
           your session.
         </p>
 
-        <h3>Analytics</h3>
+        <h3>Analytics Cookies (Require Consent)</h3>
         <p>
-          We use <strong>Plausible Analytics</strong> for understanding how
-          the forum is used. Plausible is a privacy-friendly analytics tool
-          that does <strong>not use cookies</strong>, does not collect personal
-          data, and does not track individual users across sites. It is fully
-          GDPR compliant without requiring cookie consent for analytics.
+          We use <strong>Google Analytics</strong> to understand how the forum
+          is used. These cookies are <strong>only set when you consent</strong>{" "}
+          to analytics cookies via our cookie banner. You can change your
+          preference at any time.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Cookie</th>
+              <th>Purpose</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>_ga</td>
+              <td>
+                Distinguishes unique visitors. Used by Google Analytics to
+                calculate visitor, session, and campaign data.
+              </td>
+              <td>2 years</td>
+            </tr>
+            <tr>
+              <td>_ga_*</td>
+              <td>
+                Used by Google Analytics 4 to maintain session state and
+                track interactions across pages.
+              </td>
+              <td>2 years</td>
+            </tr>
+            <tr>
+              <td>_gid</td>
+              <td>
+                Distinguishes unique visitors for the current day. Used to
+                throttle request rate.
+              </td>
+              <td>24 hours</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          IP addresses are anonymized before being stored by Google Analytics.
+          No personal data is shared with advertising networks.
         </p>
 
         <h2>Third-Party Cookies</h2>
         <p>
-          We do not use any third-party advertising, tracking, or social media
-          cookies. No data is shared with advertisers or ad networks.
+          We do not use any third-party advertising or social media cookies.
+          The only third-party cookies used are Google Analytics cookies
+          described above, and only with your explicit consent. No data is
+          shared with advertisers or ad networks.
         </p>
 
         <h2>Managing Cookies</h2>
