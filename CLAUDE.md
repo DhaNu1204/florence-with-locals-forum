@@ -11,7 +11,7 @@
 - **Rich Text Editor:** Tiptap
 - **Email:** Resend
 - **Hosting:** Vercel
-- **Analytics:** Plausible (privacy-friendly, GDPR compliant)
+- **Analytics:** Google Analytics GA4 (GDPR compliant, consent-gated)
 
 ## Architecture Rules
 - Use App Router (`src/app/`) with server components by default
@@ -84,7 +84,7 @@ public/             → Static assets, favicon, OG images
 - Privacy policy page
 - User data export capability
 - Right to deletion (full account + content removal)
-- Cookie-free analytics (Plausible)
+- Consent-gated analytics (Google Analytics GA4, only loaded with user consent)
 
 ## SEO
 - SSR all public pages
@@ -124,5 +124,4 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=   # Supabase anon/public key
 SUPABASE_SERVICE_ROLE_KEY=       # Supabase service role key (server-only!)
 NEXT_PUBLIC_SITE_URL=            # https://forum.florencewithlocals.com
 RESEND_API_KEY=                  # Resend email API key
-PLAUSIBLE_DOMAIN=                # forum.florencewithlocals.com
 ```

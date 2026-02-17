@@ -12,7 +12,7 @@ A community forum for travelers and locals to share tips, ask questions, and con
 - **Database / Auth / Storage:** Supabase
 - **Rich Text Editor:** Tiptap
 - **Email:** Resend
-- **Analytics:** Plausible (cookie-free, GDPR compliant)
+- **Analytics:** Google Analytics GA4 (GDPR compliant, consent-gated)
 - **Hosting:** Vercel
 
 ## Getting Started
@@ -110,7 +110,6 @@ See `.env.local.example` for the full list. Key variables:
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL |
 | `RESEND_API_KEY` | Resend email API key |
-| `PLAUSIBLE_DOMAIN` | Plausible analytics domain |
 
 ## Deployment
 
